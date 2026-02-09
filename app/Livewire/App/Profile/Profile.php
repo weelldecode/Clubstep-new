@@ -88,6 +88,8 @@ class Profile extends Component
             "collections" => $this->user->collections()->latest()->get(),
             "followersCount" => $this->user->followers()->count(),
             "followingCount" => $this->user->following()->count(),
-        ])->title($this->user->name);
+        ])
+            ->title($this->user->name)
+            ->layout("layouts.app");
     }
 }

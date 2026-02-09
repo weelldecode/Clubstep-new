@@ -9,13 +9,15 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4.16",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "livewire/flux": "^2.1.1",
         "livewire/volt": "^1.7.0",
         "mcamara/laravel-localization": "*",
         "mercadopago/dx-php": "^3.5",
+        "spatie/laravel-permission": "^6.24",
+        "spatie/laravel-responsecache": "^7.7",
         "wireui/wireui": "^2.4"
     },
     "require-dev": {
@@ -32,7 +34,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

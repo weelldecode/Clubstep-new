@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -20,9 +19,9 @@ class ResetPassword extends Component
 
     public string $email = '';
 
-    public string $password = '';
+    public string $pin = '';
 
-    public string $password_confirmation = '';
+    public string $pin_confirmation = '';
 
     /**
      * Mount the component.
@@ -42,17 +41,17 @@ class ResetPassword extends Component
         $this->validate([
             'token' => ['required'],
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+            'pin' => ['required', 'digits:6', 'confirmed'],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
         // will update the password on an actual user model and persist it to the
         // database. Otherwise we will parse the error and return the response.
         $status = Password::reset(
-            $this->only('email', 'password', 'password_confirmation', 'token'),
+            $this->only('email', 'pin', 'pin_confirmation', 'token'),
             function ($user) {
                 $user->forceFill([
-                    'password' => Hash::make($this->password),
+                    'pin' => Hash::make($this->pin),
                     'remember_token' => Str::random(60),
                 ])->save();
 

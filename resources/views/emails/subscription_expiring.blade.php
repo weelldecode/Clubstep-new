@@ -2,22 +2,22 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Assinatura Próxima do Vencimento</title>
+    <title>{{ t('Subscription Expiring Soon') }}</title>
 </head>
 <body style="font-family: Arial, sans-serif; color: #333;">
-    <h2>Olá, {{ $user->name }}! 👋</h2>
-    <p>Sua assinatura está prestes a expirar em <strong>{{ $daysLeft }} dias</strong>.</p>
+    <h2>{{ t('Hello') }}, {{ $user->name }}! 👋</h2>
+    <p>{{ t('Your subscription is about to expire in :days days.', ['days' => $daysLeft]) }}</p>
     
-    <p>Para continuar aproveitando nossos serviços, por favor, renove sua assinatura antes do vencimento.</p>
+    <p>{{ t('To keep enjoying our services, please renew your subscription before it expires.') }}</p>
     <a href="{{ $renewUrl }}" style="padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
-    Renovar Assinatura
+    {{ t('Renew Subscription') }}
 </a>
 
 
-    <p>Se precisar de ajuda, estamos à disposição!</p>
+    <p>{{ t('If you need help, we are here for you!') }}</p>
 
-    <p>Obrigado por estar conosco! 🎉</p>
+    <p>{{ t('Thanks for being with us!') }} 🎉</p>
     <hr>
-    <p style="font-size: 0.9em; color: #777;">Este é um aviso automático, não responda este email.</p>
+    <p style="font-size: 0.9em; color: #777;">{{ t('This is an automated notice, please do not reply to this email.') }}</p>
 </body>
 </html>

@@ -5,11 +5,11 @@
         @endphp
 
         @if ($item['url'] && !$isLast)
-            <flux:breadcrumbs.item href="{{ $item['url'] }}" separator="slash"> {{ $item['label'] }}</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item href="{{ $item['url'] }}" separator="slash"> {{ t($item['label']) }}</flux:breadcrumbs.item>
         @elseif ($isLast)
-            <flux:breadcrumbs.item separator="slash"  > {{ $item['label'] }}</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item separator="slash"  > {{ t($item['label']) }}</flux:breadcrumbs.item>
         @else
-            <flux:breadcrumbs.item separator="slash"> {{ $item['label'] }}</flux:breadcrumbs.item>
+            <flux:breadcrumbs.item separator="slash"> {{ t($item['label']) }}</flux:breadcrumbs.item>
         @endif
 
         @if (!$loop->last)

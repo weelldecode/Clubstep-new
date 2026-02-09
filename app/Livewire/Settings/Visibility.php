@@ -54,6 +54,6 @@ class Visibility extends Component
 
     public function render()
     {
-        return view("livewire.settings.visibility");
+        return view("livewire.settings.visibility")->layout("layouts.app");
     }
 }

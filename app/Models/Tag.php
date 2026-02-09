@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Tag extends Model
 {
     use HasFactory;
     //
+    protected static ?bool $hasCollectionTagTable = null;
+
     protected $fillable = ["name", "slug", "description", "type", "parent_id"];
 
     public function parent()
@@ -22,6 +25,23 @@ class Tag extends Model
     }
 
     public function collections()
+    {
+        if (!self::hasCollectionTagTable()) {
+            return $this->legacyCollections();
+        }
+
+        return $this->belongsToMany(
+            Collection::class,
+            "collection_tag",
+            "tag_id",
+            "collection_id",
+        );
+    }
+
+    /**
+     * Compatibilidade com dados legados no pivot item_collection.
+     */
+    public function legacyCollections()
     {
         return $this->belongsToMany(
             Collection::class,
@@ -38,5 +58,14 @@ class Tag extends Model
             "tag_id",
             "item_id",
         );
+    }
+
+    private static function hasCollectionTagTable(): bool
+    {
+        if (self::$hasCollectionTagTable === null) {
+            self::$hasCollectionTagTable = Schema::hasTable("collection_tag");
+        }
+
+        return self::$hasCollectionTagTable;
     }
 }

@@ -10,7 +10,7 @@ use Livewire\Component;
 #[Layout("components.layouts.auth")]
 class ConfirmPassword extends Component
 {
-    public string $password = "";
+    public string $pin = "";
 
     /**
      * Confirm the current user's password.
@@ -18,17 +18,13 @@ class ConfirmPassword extends Component
     public function confirmPassword(): void
     {
         $this->validate([
-            "password" => ["required", "string"],
+            "pin" => ["required", "digits:6"],
         ]);
 
-        if (
-            !Auth::guard("web")->validate([
-                "email" => Auth::user()->email,
-                "password" => $this->password,
-            ])
-        ) {
+        $user = Auth::user();
+        if (!$user || !\Illuminate\Support\Facades\Hash::check($this->pin, $user->pin)) {
             throw ValidationException::withMessages([
-                "password" => __("auth.password"),
+                "pin" => __("PIN inválido."),
             ]);
         }
 

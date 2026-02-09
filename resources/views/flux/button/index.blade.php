@@ -61,10 +61,10 @@ if ($loading && $type !== 'submit' && ! $isJsMethod) {
 $classes = Flux::classes()
     ->add('relative items-center font-medium justify-center gap-2 whitespace-nowrap')
     ->add('disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none')
-    ->add(match ($size) { // Size...    
+    ->add(match ($size) { // Size...
         'base' => 'h-10 text-sm rounded-lg' . ' ' . (
-            $square 
-                ? 'w-10' 
+            $square
+                ? 'w-10'
                 // If we have an icon, we want to reduce the padding on the side that has the icon...
                 : ($iconLeading && $iconLeading !== '' ? 'ps-3' : 'ps-4') . ' ' . ($iconTrailing && $iconTrailing !== '' ? 'pe-3' : 'pe-4')
         ),
@@ -85,11 +85,11 @@ $classes = Flux::classes()
     } : '')
     ->add(match ($variant) { // Background color...
         'primary' => 'bg-[var(--color-accent)] hover:bg-[color-mix(in_oklab,_var(--color-accent),_transparent_10%)]',
-        'filled' => 'bg-zinc-800/5 hover:bg-zinc-800/10 dark:bg-white/10 dark:hover:bg-white/20',
-        'outline' => 'bg-white hover:bg-zinc-50 dark:bg-zinc-700 dark:hover:bg-zinc-600/75',
+        'filled' => 'bg-zinc-900  hover:bg-zinc-700  dark:bg-white/10 dark:hover:bg-white/20',
+        'outline' => 'bg-white hover:bg-zinc-50 dark:bg-zinc-700 dark:hover:bg-zinc-600',
         'danger' => 'bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500',
-        'ghost' => 'bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15',
-        'subtle' => 'bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15',
+        'ghost' => 'bg-transparent hover:bg-zinc-700 dark:hover:bg-white/15',
+        'subtle' => 'bg-transparent hover:bg-zinc-700  dark:hover:bg-white/15',
     })
     ->add(match ($variant) { // Text color...
         'primary' => 'text-[var(--color-accent-foreground)]',

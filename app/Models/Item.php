@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Item extends Model
@@ -12,19 +11,24 @@ class Item extends Model
     //
     protected $fillable = [
         "name",
+        "slug",
         "description",
         "price",
         "file_url",
-        "imagem_path",
+        "image_path",
+        "images",
         "type",
         "features",
         "is_premium",
+        "collection_id",
     ];
 
     protected $casts = [
         "images" => "array",
         "features" => "array",
     ];
+
+    protected $appends = ["thumb", "preview_url"];
 
     // Um item pertence a uma coleção
     public function collection()
@@ -41,10 +45,10 @@ class Item extends Model
     {
         return $this->belongsToMany(
             Category::class,
-            "item_collection", // pivot
-            "parent_id", // FK que aponta para Category
-            "collection_id", // FK que aponta para Item? → se não existe, precisa ajustar
-        )->wherePivot("type", "category");
+            "items_categories",
+            "item_id",
+            "category_id",
+        );
     }
     public function tags()
     {
@@ -58,6 +62,29 @@ class Item extends Model
     public function favoritedBy()
     {
         return $this->belongsToMany(User::class, "favorites")->withTimestamps();
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    public function getThumbAttribute()
+    {
+        return $this->images[0] ?? null;
+    }
+
+    public function getPreviewUrlAttribute(): string
+    {
+        if (!empty($this->image_path)) {
+            return asset("storage/" . ltrim((string) $this->image_path, "/"));
+        }
+
+        if (!empty($this->thumb)) {
+            return asset("storage/" . ltrim((string) $this->thumb, "/"));
+        }
+
+        return asset("images/placeholders/item-default.svg");
     }
 
     public function is_premium(): string

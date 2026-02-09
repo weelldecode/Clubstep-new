@@ -20,6 +20,8 @@ class Manager extends Component
 
     public function render()
     {
-        return view("livewire.app.downloads.manager")->title("Seus Downloads");
+        return view("livewire.app.downloads.manager")
+            ->title("Seus Downloads")
+            ->layout("layouts.app");
     }
 }

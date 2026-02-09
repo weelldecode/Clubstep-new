@@ -23,8 +23,8 @@
     --color-zinc-900: hsl(240 17% 15.3%);
     --color-zinc-950: hsl(240, 17%, 11%);
 
-    --color-accent: #ff4e08;
-    --color-accent-content: #ff4e08;
+    --color-accent: #4361ee;
+    --color-accent-content: #5f7af5;
     --color-accent-foreground: #fff;
     --primary: #ffffff;
 
@@ -45,26 +45,25 @@
         --color-zinc-200: #bdbfd1;
         --color-zinc-300: #e0e1e9;
         --color-zinc-400: #bdbfd1;
-        --color-zinc-500: #2a2c2b;
-        --color-zinc-600: #323633;
-        --color-zinc-700: #2a2c2b;
-        --color-zinc-800: #111;
-        --color-zinc-900: #222;
-        --color-zinc-950: #191919;
+        --color-zinc-500: #151736;
+        --color-zinc-600: #1c243b;
+        --color-zinc-700: #192036;
+        --color-zinc-800: #090c17;
+        --color-zinc-900: #101629;
+        --color-zinc-950: #111529;
 
-        --color-accent: #ff4e08;
-        --color-accent-content: #ff5b1f;
+        --color-accent: #4361ee;
+        --color-accent-content: #5f7af5;
         --color-accent-foreground: #ffffff;
-        --color-background-dark: #222 !important;
+        --color-background-dark: #192036 !important;
         --color-secondary-400: #bdbfd1 !important;
-        --color-secondary-500: #222 !important;
-        --color-secondary-600: #222 !important;
-        --color-secondary-700: #222 !important;
-        --color-secondary-800: #222 !important;
-        --color-secondary-900: #222 !important;
-        --color-secondary-950: #222 !important;
-        --color-gray-300: #2a2c2b !important;
-        --color-primary-600: hsla(17 100% 55% / 0.2);
+        --color-secondary-500: #192036 !important;
+        --color-secondary-600: #192036 !important;
+        --color-secondary-700: #192036 !important;
+        --color-secondary-800: #192036 !important;
+        --color-secondary-900: #192036 !important;
+        --color-secondary-950: #192036 !important;
+        --color-gray-300: #0e1324 !important; 
         --secundary: #323242;
     }
 }
@@ -93,7 +92,9 @@
 [data-flux-label] {
     @apply !mb-0 !leading-tight;
 }
-
+.bg-grid {
+    background-image: url(/public/assets/img/download.svg);
+}
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {

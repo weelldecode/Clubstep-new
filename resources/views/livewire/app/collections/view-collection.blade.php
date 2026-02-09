@@ -1,195 +1,362 @@
-<div class=" relative">
-    @php
-        // junta todas as imagens dos itens da coleção em um array único
-        $allImages = [];
-        foreach ($collection->items as $item) {
-            $itemImages = is_array($item->images) ? $item->images : json_decode($item->images, true);
-            if ($itemImages) {
-                $allImages = array_merge($allImages, $itemImages);
-            }
+{{-- resources/views/livewire/app/collections/show.blade.php --}}
+@php
+    $type = strtolower($collection->type ?? 'mockups');
+    $images = $previewImages ?? [];
+    $previewCount = count($images);
+    $hero = $images[0] ?? null;
+    $itemPlaceholder = asset('images/placeholders/item-default.svg');
+    $filesCount = $collection->items_count ?? $collection->items->count();
+    $author = $collection->user;
+@endphp
+
+<div class="relative overflow-hidden">
+    <style>
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes glowPulse {
+            0%, 100% { opacity: .35; transform: translateY(0); }
+            50% { opacity: .6; transform: translateY(-6px); }
+        }
+        .fade-up { animation: fadeUp .7s ease-out both; }
+        .delay-1 { animation-delay: .08s; }
+        .delay-2 { animation-delay: .16s; }
+        .delay-3 { animation-delay: .24s; }
+        .glow-pulse { animation: glowPulse 6s ease-in-out infinite; }
+    </style>
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <div class="absolute inset-x-0 top-0 h-1 bg-accent/80"></div>
+    </div>
 
-        // pega só as primeiras 4 imagens do array completo
-        $imagesToShow = array_slice($allImages, 0, 4);
-    @endphp
+    <div class="relative px-4 md:px-8">
+        {{-- HERO --}}
+        <section class="container mx-auto mt-6 mb-8 fade-up">
+            <livewire:components.breadcrumb />
 
-
-    <div class="container mx-auto ">
-        <div class="flex gap-6 mt-42 z-50 ">
-        <div class="w-[40rem] flex flex-col gap-5  border-r pr-6 border-zinc-200 dark:border-zinc-700 h-full">
-            @if (!empty($imagesToShow))
-                <div class="grid grid-cols-2 gap-2">
-                    @foreach ($imagesToShow as $i => $img)
-                        <img src="{{ asset('storage/' . $img) }}" alt="{{ $collection->name }}"
-                            class="w-full h-48 object-cover rounded transition-all duration-700 opacity-100 " />
-                    @endforeach
+            <div class="mt-4 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-end">
+                <div class="min-w-0">
+                    <h1 class="text-3xl md:text-4xl font-black tracking-tight text-zinc-900 dark:text-white truncate">
+                        {{ $collection->name }}
+                    </h1>
+                    <p class="mt-2 text-sm md:text-base text-zinc-500 dark:text-zinc-400 max-w-3xl">
+                        {{ $collection->description }}
+                    </p>
                 </div>
-            @else
-                <div class="grid grid-cols-2 gap-1">
-                    @for ($i = 0; $i < 4; $i++)
-                        <div
-                            class="w-full h-40 bg-zinc-200 flex items-center justify-center text-zinc-400 dark:text-zinc-600 rounded">
-                            Sem imagem
-                        </div>
-                    @endfor
+
+                <div class="flex flex-wrap items-center gap-2 text-xs justify-start lg:justify-end">
+                    <span class="inline-flex items-center rounded-full px-3 py-1 font-semibold
+                                 bg-white/70 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-200
+                                 ring-1 ring-zinc-200/60 dark:ring-zinc-800 backdrop-blur">
+                        {{ $filesCount }} {{ Str::plural('arquivo', $filesCount) }}
+                    </span>
+                    @if(!empty($collection->type))
+                        <span class="inline-flex items-center rounded-full px-3 py-1 font-semibold uppercase
+                                     bg-accent/10 text-accent ring-1 ring-accent/20">
+                            {{ $collection->type }}
+                        </span>
+                    @endif
+                    @if ($author)
+                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 font-semibold
+                                     bg-white/70 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-200
+                                     ring-1 ring-zinc-200/60 dark:ring-zinc-800 backdrop-blur">
+                            <span class="h-1.5 w-1.5 rounded-full bg-accent/80"></span>
+                            {{ $author->name }}
+                        </span>
+                    @endif
                 </div>
-            @endif
-            <flux:separator />
-            <div
-                class="overflow-hidden dark:bg-zinc-950 bg-zinc-50 border border-zinc-200 dark:border-transparent p-4 rounded dark:shadow">
+            </div>
 
-                <h1 class=" flex flex-col gap-1 text-xl font-bold tracking-wide dark:text-white text-zinc-800">
-                    {{ $collection->name }}
-                </h1>
-                <p class="text-sm font-medium mt-2 text-zinc-500 dark:text-zinc-100">{{ $collection->description }}</p>
-                <div class=" inline-flex flex-col gap-1 mt-5 w-full">
-                    <div class="ftext-base font-medium text-zinc-700 dark:text-zinc-50 hidden">
+            <flux:separator class="mt-6" variant="subtle" />
+        </section>
 
-                        @php
-                            $count = sizeof($collection->items);
-                        @endphp
-
-                        @if ($count === 0)
-                            Nenhum arquivo
-                        @else
-                            <span class=" font-semibold text-base text-zinc-500 dark:text-zinc-100 racking-wider">
-
-                                {{ $count }} {{ Str::plural('Arquivo', $count) }} </span>
-                        @endif
-                    </div>
-                    <div
-                        class="mb-2 relative flex items-center gap-3 text-base font-medium text-zinc-700 dark:text-zinc-50">
-                        @php
-                            $author = $collection->user;
-                        @endphp
-
-                        @if ($author)
-                            <div class="mt-2 flex items-center gap-4">
-                                {{-- Avatar --}}
-                                @if ($author->profile_image)
-                                    <flux:avatar size="lg"
-                                        src="{{ asset('storage/' . $author->profile_image) }}" />
-                                @else
-                                    <div
-                                        class="w-10 h-10 rounded-full bg-zinc-300 flex items-center justify-center text-sm font-bold text-white">
-                                        {{ $author->initials() }}
-                                    </div>
-                                @endif
+        {{-- BODY --}}
+        <div class="container mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {{-- LEFT: PREVIEW + META --}}
+                <aside class="lg:col-span-4 fade-up delay-1">
+                    <div class="lg:sticky lg:top-24 space-y-5">
+                        <div class="rounded-2xl overflow-hidden border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                            <div class="p-4 flex items-center justify-between">
                                 <div>
-                                    <flux:heading size="lg">{{ $author->name }}</flux:heading>
-                                    <flux:text>
-                                        @if ($author->type === 'verified')
-                                            <flux:text class="flex items-center gap-1">Verificado <flux:icon.badge-check
-                                                    class="size-4" /></flux:text>
-                                        @endif
-                                    </flux:text>
+                                <h3 class="text-sm font-bold tracking-wide text-zinc-700 dark:text-zinc-100">{{ t('Preview') }}</h3>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                        {{ $type === 'sites' ? t('Website screenshot') : t('Collection images') }}
+                                </p>
                                 </div>
+
+                                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase
+                                             bg-white/30 dark:bg-white/10 text-zinc-700 dark:text-zinc-100 ring-1 ring-zinc-200/60 dark:ring-white/10">
+                                    {{ $type }}
+                                </span>
                             </div>
-                        @endif
 
+                            <div class="px-4 pb-4">
+                                @if($type === 'sites')
+                                    <div class="rounded-2xl overflow-hidden border border-zinc-200/60 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900">
+                                        <div class="flex items-center gap-2 px-4 py-3 bg-white/70 dark:bg-zinc-700/100 border-b border-zinc-200/60 dark:border-zinc-800">
+                                            <span class="h-2.5 w-2.5 rounded-full bg-red-400/80"></span>
+                                            <span class="h-2.5 w-2.5 rounded-full bg-yellow-400/80"></span>
+                                            <span class="h-2.5 w-2.5 rounded-full bg-green-400/80"></span>
+                                            <div class="ml-3 h-7 flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-800"></div>
+                                        </div>
+
+                                        @if($hero)
+                                            <img
+                                                src="{{ asset('storage/' . $hero) }}"
+                                                class="aspect-[4/3] w-full object-cover"
+                                                alt=""
+                                                loading="lazy"
+                                            />
+                                        @else
+                                            <img
+                                                src="{{ $collection->cover_url }}"
+                                                class="aspect-[4/3] w-full object-cover"
+                                                alt=""
+                                                loading="lazy"
+                                            />
+                                        @endif
+                                    </div>
+                                @else
+                                    @if ($previewCount > 0)
+                                        <div class="grid gap-1 {{ $previewCount === 1 ? 'grid-cols-1' : 'grid-cols-2' }}">
+                                            @foreach ($images as $img)
+                                                <img
+                                                    src="{{ asset('storage/' . $img) }}"
+                                                    class="w-full h-[190px] object-cover rounded-xl border border-zinc-200/60 dark:border-zinc-800"
+                                                    alt=""
+                                                    loading="lazy"
+                                                >
+                                            @endforeach
+
+                                            @for ($i = $previewCount; $i < 4; $i++)
+                                                @if($previewCount > 1)
+                                                    <img
+                                                        src="{{ $itemPlaceholder }}"
+                                                        class="w-full h-[190px] object-cover rounded-xl border border-zinc-200/60 dark:border-zinc-800"
+                                                        alt=""
+                                                        loading="lazy"
+                                                    >
+                                                @endif
+                                            @endfor
+                                        </div>
+                                    @else
+                                        <div class="grid grid-cols-2 gap-1">
+                                            @for ($i = 0; $i < 4; $i++)
+                                                <img
+                                                    src="{{ $itemPlaceholder }}"
+                                                    class="w-full h-[190px] object-cover rounded-xl border border-zinc-200/60 dark:border-zinc-800"
+                                                    alt=""
+                                                    loading="lazy"
+                                                >
+                                            @endfor
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-5 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                            @if ($author)
+                                <div class="flex items-center gap-4">
+                                    @if ($author->profile_image)
+                                        <flux:avatar size="lg" src="{{ asset('storage/' . $author->profile_image) }}" />
+                                    @else
+                                        <div class="w-11 h-11 rounded-full bg-zinc-300 flex items-center justify-center text-sm font-bold text-white">
+                                            {{ $author->initials() }}
+                                        </div>
+                                    @endif
+
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-extrabold text-zinc-900 dark:text-white truncate">{{ $author->name }}</p>
+                                            @if ($author->type === 'verified')
+                                                <flux:icon.badge-check class="size-4 text-accent" />
+                                            @endif
+                                        </div>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('Collection author') }}</p>
+                                    </div>
+                                </div>
+
+                                <flux:separator class="my-4" />
+                            @endif
+
+                            <div class="flex flex-wrap gap-2">
+                                @php
+                                    $collectionTags = $collection->tags
+                                        ->merge($collection->legacyTags)
+                                        ->unique("id")
+                                        ->values();
+                                @endphp
+                                @forelse ($collectionTags as $tag)
+                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold
+                                                 bg-accent/10 text-accent ring-1 ring-accent/20">
+                                        {{ $tag->name }}
+                                    </span>
+                                @empty
+                                    <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('No tags.') }}</span>
+                                @endforelse
+                            </div>
+                        </div>
                     </div>
-                    <flux:separator />
-                    <ul class="flex flex-wrap gap-2  mt-2  ">
-                        @foreach ($collection->tags as $tag)
-                            <li class="bg-accent/15 border border-accent text-accent px-2 py-1  rounded text-xs font-semibold tracking-wide">{{ $tag->name }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+                </aside>
 
-            </div>
-        </div>
-        <div wire:ignore.self class="relative w-full">
-            <div class="flex items-center gap-5 justify-between w-full mb-10">
+                {{-- RIGHT: ITEMS --}}
+                <main class="lg:col-span-8 space-y-4 fade-up delay-2">
+                    <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="w-full sm:w-[260px]">
+                                <x-select
+                                    wire:model.live="sortField"
+                                    placeholder="{{ t('Sort by') }}"
+                                    :options="[
+                                        ['name' => t('Name'), 'id' => 'name'],
+                                        ['name' => t('Created date'), 'id' => 'created_at'],
+                                    ]"
+                                    option-label="name"
+                                    option-value="id"
+                                />
+                            </div>
 
-                <div class="w-[15rem]">
-                    <x-select  wire:model.live="sortField" placeholder="Select one status"
-                        :options="[
-                            ['name' => 'Nome', 'id' => 'name'],
-                            ['name' => 'Data de criação', 'id' => 'created_at'],
-                        ]" option-label="name" option-value="id"
-                    />
+                            <flux:button wire:click="toggleSortDirection" variant="outline" title="Alternar ordem">
+                                @if ($sortDirection === 'asc')
+                                    ↑ {{ t('Ascending') }}
+                                @else
+                                    ↓ {{ t('Descending') }}
+                                @endif
+                            </flux:button>
+                        </div>
+                    </div>
 
-                </div>
-                <!-- Ordenação -->
-                <div class="flex items-center gap-4 ">
+                    <div wire:loading class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        @for($i=0;$i<6;$i++)
+                            <div class="h-[300px] rounded-2xl bg-zinc-100 dark:bg-zinc-900 animate-pulse"></div>
+                        @endfor
+                    </div>
 
-
-                    <flux:button wire:click="toggleSortDirection"
-                    variant="outline"
-                        class="text-sm font-semibold text-zinc-600 dark:text-zinc-200 w-full" title="Alternar ordem"
-                        aria-label="Alternar ordem">
-                        @if ($sortDirection === 'asc')
-                            Order Crescente
-                        @else
-                            Order Decrescente
-                        @endif
-                    </flux:button>
-                </div>
-            </div>
-            <div x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 transform scale-95"
-                x-transition:enter-end="opacity-100 transform scale-100"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 transform scale-100"
-                x-transition:leave-end="opacity-0 transform scale-95">
-
-                @if ($isItemView)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 ">
+                    <div wire:loading.remove class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         @forelse($items as $index => $item)
-                            <div x-data="{ visible: false }" x-init="setTimeout(() => visible = true, {{ $index * 100 }})"
-                                :class="{ 'opacity-100 translate-y-0': visible, 'opacity-0 translate-y-4': !visible }"
-                                @click="$wire.showItem({{ $item->id }})"
-                                class="group relative bg-zinc-900 hover:-translate-y-2 overflow-hidden cursor-pointer transition-all duration-500 ease-out opacity-0 translate-y-4 rounded  h-[280px] w-full ">
+                            <div
+                                x-data="{ visible: false }"
+                                x-init="setTimeout(() => visible = true, {{ $index * 70 }})"
+                                :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
+                                wire:click="showItem({{ $item->id }})"
+                                class="opacity-0 translate-y-3 transition-all duration-500 ease-out cursor-pointer"
+                                role="button"
+                                tabindex="0"
+                            >
+                                <div class="group relative overflow-hidden rounded-2xl border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 shadow-[0_20px_50px_-40px_rgba(0,0,0,0.35)]">
+                                    <img
+                                        src="{{ $item->preview_url }}"
+                                        class="h-[300px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        alt="{{ $item->name }}"
+                                        loading="lazy"
+                                    />
 
-                                <img class='absolute inset-0 h-full w-full object-cover opacity-90 transition-opacity duration-300 ease-out group-hover:opacity-100 group-hover:transition-opacity group-hover:duration-300'
-                                    src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-90"></div>
 
+                                    <div class="absolute inset-x-0 bottom-0 p-4">
+                                        <h3 class="text-sm font-extrabold tracking-tight text-white line-clamp-1">
+                                            {{ $item->name }}
+                                        </h3>
+                                        <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                                            <span class="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 font-semibold uppercase text-white/90 ring-1 ring-white/20">
+                                                {{ $item->type }}
+                                            </span>
+                                            @if ($item->type === 'sites')
+                                                <span class="inline-flex items-center rounded-full bg-accent/80 px-2 py-0.5 font-semibold text-white">
+                                                    R$ {{ number_format((float) $item->price, 2, ',', '.') }}
+                                                </span>
+                                            @endif
+                                        </div>
 
-                                <div
-                                    class="absolute inset-0 bg-gradient-to-t from-zinc-800/0 to-transparent to-110% text-white   group-hover:bg-gradient-to-t group-hover:from-black/90 dark:group-hover:from-zinc-950  hover:shadow-lg group-hover:transition-all group-hover:duration-300 transition-all duration-300">
+                                        <p class="mt-2 text-[11px] text-white/70">
+                                            {{ t('Click to view details') }}
+                                        </p>
 
-                                    <h3
-                                        class="  text-sm font-semibold tracking-wide absolute bottom-5 left-5 text-white  transform translate-y-2 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-                                        {{ $item->name }}
-                                    </h3>
-
-                                    <div class="flex flex-col">
-
+                                        @if ($item->type === 'sites')
+                                            @php
+                                                $alreadyPurchased = $this->hasPurchasedItem($item->id);
+                                                $cartHasItem = $this->hasActiveCartItem();
+                                                $itemInCart = $this->isItemInCart($item->id);
+                                            @endphp
+                                            <div class="mt-3">
+                                                @if ($alreadyPurchased)
+                                                    <span class="inline-flex items-center rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-100">
+                                                        Já comprado
+                                                    </span>
+                                                @elseif ($cartHasItem && !$itemInCart)
+                                                    <a
+                                                        href="{{ route('cart.index') }}"
+                                                        class="inline-flex items-center rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
+                                                    >
+                                                        Finalizar compra
+                                                    </a>
+                                                @elseif ($itemInCart)
+                                                    <a
+                                                        href="{{ route('cart.index') }}"
+                                                        class="inline-flex items-center rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
+                                                    >
+                                                        No carrinho
+                                                    </a>
+                                                @else
+                                                    <button
+                                                        type="button"
+                                                        wire:click.stop="addToCart({{ $item->id }})"
+                                                        class="inline-flex items-center rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
+                                                    >
+                                                        {{ t('Buy now') }}
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                         @empty
-                            <span class="col-span-full text-zinc-400 mx-auto italic tracking-wide">
-                                Nenhum item encontrado.
-                            </span>
+                            <div class="col-span-full flex flex-col items-center justify-center py-16 text-zinc-500 dark:text-zinc-200">
+                                <flux:icon name="layers-2" class="w-10 h-10 mb-3 text-accent"/>
+                                <p class="text-lg font-semibold">{{ t('No items found') }}</p>
+                                <p class="text-sm">{{ t('Try changing the sorting or add new items.') }}</p>
+                            </div>
                         @endforelse
                     </div>
-                @endif
+
+                    <section class="pt-6 fade-up delay-3">
+                        <flux:separator />
+
+                        <div class="mt-6">
+                            <div class="flex items-end justify-between">
+                                <h2 class="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
+                                    {{ t('Related collections') }}
+                                </h2>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                                @forelse($relatedCollections as $rel)
+                                    <a href="{{ route('collection.show', $rel) }}"
+                                       class="rounded-2xl border border-zinc-200/70 dark:border-zinc-800
+                                              bg-white/70 dark:bg-zinc-950/40 backdrop-blur p-4
+                                              hover:-translate-y-1 hover:shadow-[0_20px_50px_-30px_rgba(0,0,0,0.45)] transition">
+                                        <h3 class="font-extrabold text-zinc-900 dark:text-white line-clamp-1">{{ $rel->name }}</h3>
+                                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                                            {{ Str::limit($rel->description, 80) }}
+                                        </p>
+                                    </a>
+                                @empty
+                                    <div class="col-span-full text-center text-zinc-500 dark:text-zinc-300 py-10">
+                                        {{ t('No related collections.') }}
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </section>
+                </main>
             </div>
         </div>
-        </div>
-        <section class="mt-14">
-            <flux:separator />
-                <div class="mt-14">
-                    <h2 class="text-2xl font-bold mb-4">Coleções Relacionadas</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        @forelse($relatedCollections as $rel)
-                            <div class="border rounded p-3 shadow-sm hover:shadow-md transition">
-                                <a href="{{ route('collections.show', $rel->slug) }}">
-                                    <h3 class="font-semibold">{{ $rel->name }}</h3>
-                                    <p class="text-sm text-gray-600">
-                                        {{ Str::limit($rel->description, 60) }}
-                                    </p>
-                                </a>
-                            </div>
-                            @empty
-                                <span class="col-span-full text-zinc-400 mx-auto italic tracking-wide">
-                                    Nenhum item encontrado.
-                                </span>
-                            @endforelse
-                    </div>
-                </div>
-        </section>
+
+        {{-- MODAL --}}
+        @include('livewire.app.collections.group.item-modal')
     </div>
-    @include('livewire.app.collections.group.item-modal')
 </div>
+ 

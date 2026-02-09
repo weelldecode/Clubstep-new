@@ -1,0 +1,33 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#091026"/>
+      <stop offset="1" stop-color="#10275B"/>
+    </linearGradient>
+    <linearGradient id="card" x1="188" y1="174" x2="1032" y2="726" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1C3574"/>
+      <stop offset="1" stop-color="#11244F"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#7FA4FF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#7FA4FF" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#bg)"/>
+
+  <rect x="188" y="174" width="824" height="552" rx="32" fill="url(#card)" stroke="#7FA4FF" stroke-opacity="0.22"/>
+  <rect x="232" y="230" width="736" height="44" rx="10" fill="#0F1F47"/>
+  <circle cx="257" cy="252" r="8" fill="#F87070" fill-opacity="0.9"/>
+  <circle cx="283" cy="252" r="8" fill="#FBCB5A" fill-opacity="0.9"/>
+  <circle cx="309" cy="252" r="8" fill="#64D68D" fill-opacity="0.9"/>
+
+  <rect x="232" y="304" width="332" height="178" rx="18" fill="#132A61"/>
+  <rect x="584" y="304" width="384" height="82" rx="16" fill="#15306E"/>
+  <rect x="584" y="400" width="282" height="82" rx="16" fill="#14306C"/>
+  <rect x="232" y="504" width="736" height="162" rx="18" fill="#0E204D"/>
+
+  <path d="M248 647C369 566 518 546 690 572C815 591 884 634 968 672" stroke="url(#line)" stroke-width="4"/>
+
+  <text x="246" y="646" fill="#EAF0FF" font-family="Segoe UI, Arial, sans-serif" font-size="44" font-weight="700">Item Preview</text>
+</svg>

@@ -2,56 +2,49 @@
 
 namespace App\Livewire\App;
 
-use App\Models\Collection;
-use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use App\Domain\Home\Queries\HomeFeedQuery;
+use App\Domain\Users\Queries\FollowingIdsQuery;
 
 class Home extends Component
 {
     public $recomendadas;
     public $dosSeguidos;
     public $categorias;
+    public $categories;
     public $featuredArtists;
+    public $bestSellers;
+
     public $perPage = 20;
 
     public function loadMore()
     {
         $this->perPage += 20;
     }
-    public function mount()
-    {
+
+    public function mount(
+        HomeFeedQuery $homeFeed,
+        FollowingIdsQuery $followingIds,
+    ) {
         $user = Auth::user();
 
-        // Coleções recomendadas
-        $this->recomendadas = Collection::with("user")
-            ->latest()
-            ->take(8)
-            ->get();
+        $ids = $user ? $followingIds->run($user) : [];
 
-        $this->featuredArtists = User::withCount("collections")
-            ->orderByDesc("collections_count")
-            ->take(8)
-            ->get();
+        $data = $homeFeed->run($user?->id, $ids);
 
-        if (Auth::check()) {
-            // Coleções dos que você segue
-            $this->dosSeguidos = Collection::with("user")
-                ->whereIn("user_id", $user->following()->pluck("users.id"))
-                ->latest()
-                ->take(8)
-                ->get();
-        }
-        // Por categorias (pegar até X categorias e coleções delas)
-        $this->categorias = \App\Models\Category::with([
-            "collections" => fn($q) => $q->with("user")->latest()->take(6),
-        ])
-            ->take(5)
-            ->get();
+        $this->recomendadas = $data["recomendadas"];
+        $this->featuredArtists = $data["featuredArtists"];
+        $this->categories = $data["categories"];
+        $this->categorias = $data["categorias"];
+        $this->bestSellers = $data["bestSellers"];
+        $this->dosSeguidos = $data["dosSeguidos"];
     }
 
     public function render()
     {
-        return view("livewire.app.home")->title("Pagina Inicial");
+        return view("livewire.app.home")
+            ->title("Pagina Inicial")
+            ->layout("layouts.app");
     }
 }

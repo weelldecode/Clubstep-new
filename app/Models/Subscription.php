@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Subscription extends Model
 {
+    protected static ?string $resolvedTableName = null;
+
     protected $fillable = [
         "user_id",
         "plan_id",
@@ -30,5 +33,25 @@ class Subscription extends Model
     public function plan()
     {
         return $this->belongsTo(Plan::class, "plan_id");
+    }
+
+    public function getTable()
+    {
+        if (self::$resolvedTableName !== null) {
+            return self::$resolvedTableName;
+        }
+
+        if (Schema::hasTable("subscriptions")) {
+            self::$resolvedTableName = "subscriptions";
+            return self::$resolvedTableName;
+        }
+
+        if (Schema::hasTable("subscription")) {
+            self::$resolvedTableName = "subscription";
+            return self::$resolvedTableName;
+        }
+
+        self::$resolvedTableName = parent::getTable();
+        return self::$resolvedTableName;
     }
 }

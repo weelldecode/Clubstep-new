@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Services\EmailTemplateService;
 
 class SubscriptionDeactivatedMail extends Mailable
 {
@@ -16,6 +17,8 @@ class SubscriptionDeactivatedMail extends Mailable
 
     public User $user;
     public Subscription $subscription;
+    public string $subjectLine;
+    public string $htmlBody;
 
     /**
      * Create a new message instance.
@@ -24,6 +27,28 @@ class SubscriptionDeactivatedMail extends Mailable
     {
         $this->user = $user;
         $this->subscription = $subscription;
+
+        $data = [
+            "user_name" => $user->name ?? "",
+            "user_email" => $user->email ?? "",
+            "plan_name" => $subscription->plan?->name ?? "",
+        ];
+
+        $defaultSubject = "Sua assinatura foi desativada";
+        $defaultHtml = view("emails.subscription_deactivated", [
+            "user" => $this->user,
+            "subscription" => $this->subscription,
+        ])->render();
+
+        $rendered = app(EmailTemplateService::class)->render(
+            "subscription_deactivated",
+            $data,
+            $defaultSubject,
+            $defaultHtml,
+        );
+
+        $this->subjectLine = $rendered["subject"];
+        $this->htmlBody = $rendered["html"];
     }
 
     /**
@@ -32,7 +57,7 @@ class SubscriptionDeactivatedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Sua assinatura foi desativada',
+            subject: $this->subjectLine,
         );
     }
 
@@ -42,11 +67,7 @@ class SubscriptionDeactivatedMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.subscription_deactivated',
-            with: [
-                'user' => $this->user,
-                'subscription' => $this->subscription,
-            ],
+            htmlString: $this->htmlBody,
         );
     }
 

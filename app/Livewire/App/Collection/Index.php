@@ -2,25 +2,33 @@
 
 namespace App\Livewire\App\Collection;
 
-use App\Models\Category;
-use App\Models\Tag;
-use App\Models\Collection;
 use Livewire\Component;
 use Livewire\WithPagination;
+
+use App\Models\Tag;
+use App\Models\Category;
+
+use App\Domain\Collections\DTOs\CollectionBrowseFilters;
+use App\Domain\Collections\Queries\BrowseCollectionsQuery;
+use App\Domain\Taxonomy\Queries\TaxonomyListsQuery;
 
 class Index extends Component
 {
     use WithPagination;
 
     public array $selectedCollectionCategories = [];
-    public array $selectedItemCategories = [];
+    public array $selectedItemCategories = []; // se quiser usar depois
     public array $selectedCollectionTags = [];
     public array $selectedItemTags = [];
 
     public string $search = "";
     public string $sortField = "name";
     public string $sortDirection = "asc";
-    public string $viewMode = "card"; // 'card' ou 'list'
+    public string $viewMode = "card";
+
+    // Model binding vindo das rotas /tag/{tag:slug} e /category/{category:slug}
+    public ?Tag $tag = null;
+    public ?Category $category = null;
 
     public $allCategories = [];
     public $allItemCategories = [];
@@ -37,99 +45,97 @@ class Index extends Component
         "page" => ["except" => 1],
     ];
 
-    public function mount($slug = null)
+    public function mount(?Tag $tag = null, ?Category $category = null): void
     {
-        // Carrega categorias e tags
-        $this->allCategories = Category::where("type", "collection")->get();
-        $this->allItemCategories = Category::where("type", "item")->get();
-        $this->allTags = Tag::all(); // tags para collections e items
-        $this->sortField = "name";
-        if ($slug) {
-            $tag = Tag::where("slug", $slug)->first();
-            if ($tag) {
-                $this->selectedCollectionTags = [$tag->id];
-            }
+        $this->tag = $tag;
+        $this->category = $category;
+
+        // aplica filtros iniciais baseados na rota
+        if ($this->tag) {
+            $this->selectedCollectionTags = [$this->tag->id];
+        }
+
+        if ($this->category) {
+            $this->selectedCollectionCategories = [$this->category->id];
         }
     }
 
-    // Reset da paginação ao atualizar filtros
-    public function updatingSearch()
+    public function updated($name): void
     {
-        $this->resetPage();
-    }
-    public function updatingSelectedCollectionCategories()
-    {
-        $this->resetPage();
-    }
-    public function updatingSelectedItemCategories()
-    {
-        $this->resetPage();
-    }
-    public function updatingSelectedCollectionTags()
-    {
-        $this->resetPage();
-    }
-    public function updatingSelectedItemTags()
-    {
-        $this->resetPage();
-    }
-    public function updatingSortField()
-    {
-        $this->resetPage();
-    }
-    public function updatingSortDirection()
-    {
-        $this->resetPage();
+        // qualquer mudança de filtro → reseta paginação
+        if (
+            str_starts_with($name, "selected") ||
+            $name === "search" ||
+            $name === "sortField" ||
+            $name === "sortDirection"
+        ) {
+            $this->resetPage();
+        }
     }
 
-    public function toggleSortDirection()
+    public function toggleSortDirection(): void
     {
         $this->sortDirection = $this->sortDirection === "asc" ? "desc" : "asc";
     }
 
-    public function toggleViewMode()
+    public function toggleViewMode(): void
     {
         $this->viewMode = $this->viewMode === "card" ? "list" : "card";
     }
 
-    public function render()
+    public function resetFilters(): void
     {
-        $query = Collection::query()
-            ->with(["categories", "tags", "items.tags"])
-            ->when($this->search, function ($q) {
-                $q->where("name", "like", "%{$this->search}%");
-            })
-            ->when($this->selectedCollectionCategories, function ($q) {
-                $q->whereHas("categories", function ($q2) {
-                    $q2->whereIn(
-                        "categories.id",
-                        $this->selectedCollectionCategories,
-                    );
-                });
-            })
-            ->when($this->selectedCollectionTags, function ($q) {
-                $q->whereHas("tags", function ($q2) {
-                    $q2->whereIn("tags.id", $this->selectedCollectionTags);
-                });
-            })
-            ->when($this->selectedItemTags, function ($q) {
-                $selectedItemTags = $this->selectedItemTags; // importante para usar na closure
-                $q->whereHas("items", function ($qItem) use (
-                    $selectedItemTags,
-                ) {
-                    $qItem->whereHas("tags", function ($qTag) use (
-                        $selectedItemTags,
-                    ) {
-                        $qTag->whereIn("tags.id", $selectedItemTags);
-                    });
-                });
-            })
-            ->orderBy($this->sortField, $this->sortDirection);
+        $this->selectedCollectionCategories = [];
+        $this->selectedItemCategories = [];
+        $this->selectedCollectionTags = [];
+        $this->selectedItemTags = [];
+        $this->search = "";
+        $this->sortField = "name";
+        $this->sortDirection = "asc";
+        $this->resetPage();
+    }
 
-        $collections = $query->paginate(9)->withQueryString();
+    public function render(
+        BrowseCollectionsQuery $browse,
+        TaxonomyListsQuery $tax,
+    ) {
+        // carrega listas (cacheadas no Domain)
+        $this->allCategories = $tax->collectionsCategories();
+        $this->allItemCategories = $tax->itemsCategories();
+        $this->allTags = $tax->tags();
 
-        return view("livewire.app.collections.index", [
-            "collections" => $collections,
-        ])->title("Coleções");
+        // garante que o usuário não "desfaça" o filtro da rota sem perceber:
+        // se quiser permitir, remova estes 2 ifs.
+        if ($this->tag && empty($this->selectedCollectionTags)) {
+            $this->selectedCollectionTags = [$this->tag->id];
+        }
+        if ($this->category && empty($this->selectedCollectionCategories)) {
+            $this->selectedCollectionCategories = [$this->category->id];
+        }
+
+        $filters = CollectionBrowseFilters::from([
+            "search" => $this->search,
+            "selectedCollectionCategories" =>
+                $this->selectedCollectionCategories,
+            "selectedCollectionTags" => $this->selectedCollectionTags,
+            "selectedItemTags" => $this->selectedItemTags,
+            "sortField" => $this->sortField,
+            "sortDirection" => $this->sortDirection,
+        ]);
+
+        $collections = $browse->build($filters)->paginate(9)->withQueryString();
+
+        // título dinâmico
+        $title = "Coleções";
+        if ($this->tag) {
+            $title = "Tag: " . $this->tag->name;
+        }
+        if ($this->category) {
+            $title = "Categoria: " . $this->category->name;
+        }
+
+        return view("livewire.app.collections.index", compact("collections"))
+            ->title($title)
+            ->layout("layouts.app");
     }
 }

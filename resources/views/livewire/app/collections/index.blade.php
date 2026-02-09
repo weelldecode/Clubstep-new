@@ -1,138 +1,279 @@
-<div class="mt-38 flex  px-10 gap-8  ">
+<div class="container mx-auto mt-8">
+    <style>
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp .6s ease-out both; }
+        .delay-1 { animation-delay: .08s; }
+        .delay-2 { animation-delay: .16s; }
+        .delay-3 { animation-delay: .24s; }
+    </style>
+    {{-- Header --}}
+    <div class="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between fade-up">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-zinc-900 dark:text-white">{{ t('Collections') }}</h1>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                {{ t('Explore by type, format, and categories — with card or list view.') }}
+            </p>
+        </div>
 
-<div class="realtive">
-    <div
-        class=" z-10   backdrop backdrop-blur-sm     h-full w-[22rem]    transition-shadow duration-700 ease-in-out">
-
-        <h2 class="text-base tracking-wider mb-5 text-zinc-500 dark:text-zinc-50 font-bold flex items-center gap-3">
-            <flux:icon.sliders-horizontal class="size-5" /> Filtros
-        </h2>
-        <flux:separator />
-
-        <div class="flex flex-col gap-6 mt-5">
-
-            <!-- Filtro por categorias de coleção -->
-            <div x-data="{ openCat: true }" >
-                <button
-                    @click="openCat = !openCat"
-                    class="flex items-center justify-between w-full   "
-                >
-                    <div class="flex  flex-col items-center  ">
-                        <h2 class="text-base font-semibold text-zinc-600 dark:text-zinc-300">Tipo de Conteúdo</h2>
-                        <span class="text-xs tracking-wider text-zinc-500 dark:text-zinc-200 font-medium  ">
-
-                        </span>
-                    </div>
-
-                    <flux:icon.chevron-down
-                        class="size-4 transform transition-transform duration-300"
-                        x-bind:class="openCat ? 'rotate-180' : ''"
-                    />
-                </button>
-
-                <div x-show="openCat" x-transition x-cloak class=" mt-3">
-                    <flux:checkbox.group wire:model.live="selectedCollectionCategories">
-                        @foreach ($allCategories as $category)
-                            <flux:checkbox label="{{ $category->name }}" value="{{ $category->id }}" checked />
-                        @endforeach
-                    </flux:checkbox.group>
-                </div>
-            </div>
-            <flux:separator />
-            <!-- Filtro por categorias de coleção -->
-            <div x-data="{ openTag: true }" >
-                <button
-                    @click="openTag = !openTag"
-                    class="flex items-center justify-between w-full   "
-                >
-                    <div class="flex  flex-col items-center  ">
-                        <h2 class="text-base font-bold text-zinc-600 dark:text-zinc-300">Formato</h2>
-                        <span class="text-xs tracking-wider  text-zinc-500 dark:text-zinc-200 font-medium  ">
-
-                        </span>
-                    </div>
-
-                    <flux:icon.chevron-down
-                        class="size-4 transform transition-transform duration-300"
-                        x-bind:class="openTag ? 'rotate-180' : ''"
-                    />
-                </button>
-
-                <div x-show="openTag" x-transition x-cloak class=" mt-3">
-                    <flux:checkbox.group wire:model.live="selectedCollectionTags">
-                        @foreach ($allTags as $tag)
-                            <flux:checkbox label="{{ $tag->name }}" value="{{ $tag->id }}" checked />
-                        @endforeach
-                    </flux:checkbox.group>
-                </div>
-            </div>
+        {{-- Mobile: botão filtros --}}
+        <div class="flex items-center gap-2 md:hidden">
+                <flux:button variant="outline" x-data @click="$dispatch('open-filters')">
+                    <flux:icon.sliders-horizontal class="size-5" />
+                    {{ t('Filters') }}
+                </flux:button>
         </div>
     </div>
-</div>
-    <div class="flex flex-col gap-5 w-full  ">            <!-- Busca -->
-    <div>
-        <flux:input icon="magnifying-glass" placeholder="Buscar coleções..."
-            wire:model.live.debounce.500ms="search" />
-    </div>
 
-        <div class="flex items-center gap-5 justify-between w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {{-- Sidebar Desktop --}}
+        <aside class="hidden lg:block lg:col-span-3 fade-up delay-1">
+            <div class="sticky top-10">
+                <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-5 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-bold tracking-wide text-zinc-700 dark:text-zinc-100 flex items-center gap-2">
+                            <flux:icon.sliders-horizontal class="size-5" />
+                            {{ t('Filters') }}
+                        </h2>
 
-            <!-- Botão para alternar modo de visualização -->
-            <div x-data="{ viewMode: @entangle('viewMode') }" class="mb-4">
-                <flux:button wire:click="toggleViewMode" variant="outline">
-                    <span x-text="viewMode === 'card' ? 'Mudar para Lista' : 'Mudar para Card'"></span>
-                </flux:button>
+                        {{-- opcional: limpar filtros --}}
+                        <button type="button"
+                                wire:click="resetFilters"
+                                class="text-xs font-semibold text-accent hover:underline">
+                            {{ t('Clear') }}
+                        </button>
+                    </div>
+
+                    <flux:separator class="my-4" />
+
+                    <div class="space-y-6">
+                        {{-- Tipo de Conteúdo --}}
+                        {{-- Tipo de Conteúdo --}}
+                        <div x-data="{ open: true }">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex w-full items-center justify-between"
+                            >
+                                <div class="text-left">
+                                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ t('Content type') }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('Choose categories') }}</p>
+                                </div>
+
+                                <flux:icon.chevron-down
+                                    class="size-4 transition-transform duration-300"
+                                    x-bind:class="open ? 'rotate-180' : ''"
+                                />
+                            </button>
+
+                            <div x-show="open" x-transition x-cloak class="mt-3">
+                                <flux:checkbox.group wire:model.live="selectedCollectionCategories" class="space-y-2">
+                                    @foreach ($allCategories as $category)
+                                        <flux:checkbox label="{{ $category->name }}" value="{{ $category->id }}" />
+                                    @endforeach
+                                </flux:checkbox.group>
+                            </div>
+                        </div>
+
+                        <flux:separator />
+
+                        {{-- Formato --}}
+                        <div x-data="{ open: true }">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex w-full items-center justify-between"
+                            >
+                                <div class="text-left">
+                                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ t('Format') }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('Tags and formats') }}</p>
+                                </div>
+
+                                <flux:icon.chevron-down
+                                    class="size-4 transition-transform duration-300"
+                                    x-bind:class="open ? 'rotate-180' : ''"
+                                />
+                            </button>
+
+                            <div x-show="open" x-transition x-cloak class="mt-3">
+                                <flux:checkbox.group wire:model.live="selectedCollectionTags" class="space-y-2">
+                                    @foreach ($allTags as $tag)
+                                        <flux:checkbox label="{{ $tag->name }}" value="{{ $tag->id }}" />
+                                    @endforeach
+                                </flux:checkbox.group>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </aside>
 
-            <!-- Ordenação -->
-            <div class="flex items-center gap-4 w-[25rem]">
-                <x-select  wire:model.live="sortField" placeholder="Select one status"
-                    :options="[
-                        ['name' => 'Nome', 'id' => 'name'],
-                        ['name' => 'Data de criação', 'id' => 'created_at'],
-                    ]" option-label="name" option-value="id"
-                />
+        {{-- Conteúdo --}}
+        <main class="lg:col-span-9 space-y-4 fade-up delay-2">
+            {{-- Toolbar (sticky no desktop) --}}
+            <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4
+                        md:top-24 z-10 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
+                    {{-- Busca --}}
+                    <div class="flex-1">
+                        <flux:input icon="magnifying-glass"
+                                    placeholder="{{ t('Search collections...') }}"
+                                    wire:model.live.debounce.500ms="search" />
+                    </div>
 
-                <flux:button wire:click="toggleSortDirection" class="text-sm font-semibold text-zinc-600 dark:text-zinc-200 w-full" title="Alternar ordem"
-                    aria-label="Alternar ordem">
-                    @if ($sortDirection === 'asc')
-                        Order Crescente
-                    @else
-                        Order Decrescente
+                    <div class="flex items-center gap-2 md:gap-3">
+                        {{-- Toggle view --}}
+                        <div x-data="{ viewMode: @entangle('viewMode') }">
+                            <flux:button wire:click="toggleViewMode" variant="outline">
+                                <span x-text="viewMode === 'card' ? '{{ t('List') }}' : '{{ t('Cards') }}'"></span>
+                            </flux:button>
+                        </div>
+
+                        {{-- Ordenação --}}
+                        <div class="w-[220px] hidden md:block">
+                            <x-select
+                                wire:model.live="sortField"
+                                placeholder="{{ t('Sort by') }}"
+                                :options="[
+                                    ['name' => t('Name'), 'id' => 'name'],
+                                    ['name' => t('Created date'), 'id' => 'created_at'],
+                                ]"
+                                option-label="name"
+                                option-value="id"
+                            />
+                        </div>
+
+                        <flux:button wire:click="toggleSortDirection" variant="outline" title="{{ t('Toggle order') }}">
+                            @if ($sortDirection === 'asc')
+                                ↑
+                            @else
+                                ↓
+                            @endif
+                        </flux:button>
+                    </div>
+                </div>
+
+                {{-- Ordenação mobile --}}
+                <div class="mt-3 md:hidden">
+                    <x-select
+                        wire:model.live="sortField"
+                        placeholder="{{ t('Sort by') }}"
+                        :options="[
+                            ['name' => t('Name'), 'id' => 'name'],
+                            ['name' => t('Created date'), 'id' => 'created_at'],
+                        ]"
+                        option-label="name"
+                        option-value="id"
+                    />
+                </div>
+
+                {{-- Chips ativos (opcional) --}}
+                <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                    @if(!empty($selectedCollectionCategories))
+                        <span class="inline-flex items-center rounded-full bg-zinc-100/80 dark:bg-zinc-900 px-3 py-1 font-semibold text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-zinc-800">
+                            {{ count($selectedCollectionCategories) }} {{ t('categories') }}
+                        </span>
                     @endif
-                </flux:button>
-            </div>
-        </div>
 
-        <!-- Lista de coleções com visualização dinâmica -->
-        <div x-data="{ viewMode: @entangle('viewMode') }" wire:ignore.self class="relative">
-               <template x-if="viewMode === 'card'">
-            <div x-show="viewMode === 'card'" x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 transform scale-95"
-                x-transition:enter-end="opacity-100 transform scale-100"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 transform scale-100"
-                x-transition:leave-end="opacity-0 transform scale-95" style="display: none;">
-                @include('livewire.app.collections.group.card-view')
-            </div>
-            </template>
-
-            <template x-if="viewMode === 'list'">
-                <div  x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 transform scale-95"
-                x-transition:enter-end="opacity-100 transform scale-100"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 transform scale-100"
-                x-transition:leave-end="opacity-0 transform scale-95">
-                    @include('livewire.app.collections.group.list-view')
+                    @if(!empty($selectedCollectionTags))
+                        <span class="inline-flex items-center rounded-full bg-zinc-100/80 dark:bg-zinc-900 px-3 py-1 font-semibold text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-zinc-800">
+                            {{ count($selectedCollectionTags) }} {{ t('formats') }}
+                        </span>
+                    @endif
                 </div>
-            </template>
-        </div>
+            </div>
 
-        <!-- Paginação -->
-        <div class="mt-6">
-            {{ $collections->links() }}
+            {{-- Views --}}
+            <div x-data="{ viewMode: @entangle('viewMode') }" wire:ignore.self class="relative">
+                <template x-if="viewMode === 'card'">
+                    <div
+                        x-show="viewMode === 'card'"
+                        x-transition:enter="transition ease-out duration-250"
+                        x-transition:enter-start="opacity-0 transform translate-y-2"
+                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 transform translate-y-0"
+                        x-transition:leave-end="opacity-0 transform translate-y-2"
+                        style="display:none;"
+                    >
+                        @include('livewire.app.collections.group.card-view')
+                    </div>
+                </template>
+
+                <template x-if="viewMode === 'list'">
+                    <div
+                        x-show="viewMode === 'list'"
+                        x-transition:enter="transition ease-out duration-250"
+                        x-transition:enter-start="opacity-0 transform translate-y-2"
+                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 transform translate-y-0"
+                        x-transition:leave-end="opacity-0 transform translate-y-2"
+                        style="display:none;"
+                    >
+                        @include('livewire.app.collections.group.list-view')
+                    </div>
+                </template>
+            </div>
+
+            {{-- Paginação --}}
+            <div class="pt-2">
+                {{ $collections->links() }}
+            </div>
+        </main>
+    </div>
+
+    {{-- Drawer de filtros (mobile) --}}
+    <div
+        x-data="{ open:false }"
+        x-on:open-filters.window="open = true"
+        x-on:keydown.escape.window="open = false"
+        class="lg:hidden"
+    >
+        <div x-show="open" x-transition.opacity class="fixed inset-0 z-40 bg-black/50" @click="open=false" x-cloak></div>
+
+        <div x-show="open" x-transition
+             class="fixed right-0 top-0 z-50 h-full w-[90%] max-w-sm bg-white/90 dark:bg-zinc-950/90 border-l border-zinc-200/70 dark:border-zinc-800/70 p-5 overflow-y-auto backdrop-blur"
+             x-cloak>
+
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold tracking-wide text-zinc-700 dark:text-zinc-100 flex items-center gap-2">
+                    <flux:icon.sliders-horizontal class="size-5" /> {{ t('Filters') }}
+                </h2>
+                <button class="text-sm text-zinc-500" @click="open=false">{{ t('Close') }}</button>
+            </div>
+
+            <flux:separator class="my-4" />
+
+            {{-- Repete os filtros aqui (mobile) --}}
+            <div class="space-y-6">
+                <div>
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2">{{ t('Content type') }}</p>
+                    <flux:checkbox.group wire:model.live="selectedCollectionCategories" class="space-y-2">
+                        @foreach ($allCategories as $category)
+                            <flux:checkbox label="{{ $category->name }}" value="{{ $category->id }}" />
+                        @endforeach
+                    </flux:checkbox.group>
+                </div>
+
+                <flux:separator />
+
+                <div>
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2">{{ t('Format') }}</p>
+                    <flux:checkbox.group wire:model.live="selectedCollectionTags" class="space-y-2">
+                        @foreach ($allTags as $tag)
+                            <flux:checkbox label="{{ $tag->name }}" value="{{ $tag->id }}" />
+                        @endforeach
+                    </flux:checkbox.group>
+                </div>
+
+                <div class="pt-4">
+                    <flux:button class="w-full" variant="primary" @click="open=false">{{ t('Apply') }}</flux:button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -2,216 +2,352 @@
 
 namespace App\Livewire\App\Collection;
 
-use App\Jobs\ProcessDownload;
-use App\Models\Category;
-use App\Models\Download;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+
 use App\Models\Collection;
 use App\Models\Item;
+use App\Models\Report;
+use App\Models\Cart;
 
+use App\Domain\Taxonomy\Queries\TaxonomyListsQuery;
+use App\Domain\Collections\Queries\CollectionItemsQuery;
+use App\Domain\Collections\Queries\RelatedCollectionsQuery;
+use App\Domain\Downloads\Actions\StartCollectionDownload;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class ViewCollection extends Component
 {
-    use WithPagination;
+    use WithPagination, AuthorizesRequests;
 
-    public array $selectedCollectionCategories = [];
+    public Collection $collection;
+
     public array $selectedItemCategories = [];
 
     public string $search = "";
     public string $sortField = "name";
     public string $sortDirection = "asc";
-
-    public $allCategories = [];
+    public string $viewMode = "card";
+    public array $previewImages = [];
     public $allItemCategories = [];
 
-    public string $viewMode = "card"; // 'card' ou 'list'
-
-    // Separamos slug de collection e slug de category para evitar confusão
-    public ?string $categorySlug = null;
-    public ?string $collectionSlug = null;
-    public ?int $selectedCategoryId = null;
-
-    public $collection = "";
-    // Variável para a view (evita "Undefined variable")
-    public bool $isItemView = false;
-    public $relatedItems = [];
-    public $selectedItem = null;
-    public $showModal = false;
+    public ?Item $selectedItem = null;
+    public bool $showModal = false;
+    public bool $showReportModal = false;
+    public ?int $reportItemId = null;
+    public array $reportForm = [
+        "reason" => "",
+        "message" => "",
+    ];
 
     protected $queryString = [
         "search" => ["except" => ""],
-        "selectedCollectionCategories" => ["except" => []],
         "selectedItemCategories" => ["except" => []],
         "sortField" => ["except" => "name"],
         "sortDirection" => ["except" => "asc"],
         "page" => ["except" => 1],
     ];
 
-    public function mount($slug = null)
+    public function mount(Collection $collection): void
     {
-        $this->categorySlug = null;
-        $this->collectionSlug = null;
-        $this->isItemView = false;
+        $this->collection = $collection;
+        //  $this->authorize("view", $collection); // funciona se o componente usar AuthorizesRequests
+    }
 
-        if ($slug) {
-            // primeiro verifica se existe uma Collection com esse slug
-            $collection = Collection::where("slug", $slug)->first();
-            $this->collection = $collection;
-            if ($collection) {
-                $this->isItemView = true;
-                $this->collectionSlug = $slug;
-            } else {
-                // senão, tenta como Category (filtrar coleções por categoria)
-                $category = Category::where("slug", $slug)->first();
-                if ($category) {
-                    $this->categorySlug = $slug;
-                    $this->selectedCategoryId = $category->id;
-                    $this->selectedCollectionCategories = [$category->id];
-                }
-            }
+    public function updated($name): void
+    {
+        if (
+            $name === "search" ||
+            str_starts_with($name, "selected") ||
+            $name === "sortField" ||
+            $name === "sortDirection"
+        ) {
+            $this->resetPage();
         }
-
-        $this->allCategories = Category::where("type", "collection")->get();
-        $this->allItemCategories = Category::where("type", "item")->get();
     }
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-    public function updatingSelectedCollectionCategories()
-    {
-        $this->resetPage();
-    }
-    public function updatingSelectedItemCategories()
-    {
-        $this->resetPage();
-    }
-    public function updatingSortField()
-    {
-        $this->resetPage();
-    }
-    public function updatingSortDirection()
-    {
-        $this->resetPage();
-    }
-
-    public function toggleSortDirection()
+    public function toggleSortDirection(): void
     {
         $this->sortDirection = $this->sortDirection === "asc" ? "desc" : "asc";
     }
 
-    public function toggleViewMode()
+    public function toggleViewMode(): void
     {
         $this->viewMode = $this->viewMode === "card" ? "list" : "card";
     }
 
-    public function showItem($id)
+    public function showItem(int $id): void
     {
         $this->selectedItem = Item::findOrFail($id);
         $this->showModal = true;
     }
 
-    public function closeModal()
+    public function closeModal(): void
     {
         $this->showModal = false;
         $this->selectedItem = null;
     }
 
-    public function startDownload($collectionId)
+    public function openReport(int $itemId): void
+    {
+        if (!Auth::check()) {
+            $this->dispatch("notify", message: "Faça login para denunciar.");
+            return;
+        }
+
+        $this->reportItemId = $itemId;
+        $this->reportForm = [
+            "reason" => "",
+            "message" => "",
+        ];
+        $this->showReportModal = true;
+    }
+
+    public function submitReport(): void
+    {
+        if (!Auth::check()) {
+            $this->dispatch("notify", message: "Faça login para denunciar.");
+            return;
+        }
+
+        $this->validate([
+            "reportForm.reason" => ["required", "string", "max:100"],
+            "reportForm.message" => ["nullable", "string", "max:2000"],
+        ]);
+
+        if (!$this->reportItemId) {
+            return;
+        }
+
+        Report::create([
+            "user_id" => Auth::id(),
+            "item_id" => $this->reportItemId,
+            "reason" => $this->reportForm["reason"],
+            "message" => $this->reportForm["message"] ?: null,
+            "status" => "open",
+        ]);
+
+        $this->showReportModal = false;
+        $this->dispatch("notify", message: "Denúncia enviada.");
+    }
+
+    public function closeReport(): void
+    {
+        $this->showReportModal = false;
+    }
+
+    public function startDownload(StartCollectionDownload $action, ?int $itemId = null): void
     {
         $user = Auth::user();
 
-        if (!$user->hasActiveSubscription()) {
+        if (!$user) {
             $this->dispatch(
                 "notify",
-                message: "Você precisa de uma assinatura ativa para baixar coleções.",
+                message: "Faça login para baixar coleções.",
             );
             return;
         }
-        // Verifica se já existe um download pronto para este user + coleção
-        $existingDownload = Download::where("user_id", $user->id)
-            ->where("collection_id", $collectionId)
-            ->where("status", "ready")
-            ->first();
 
-        if ($existingDownload) {
-            $this->dispatch(
-                "notify",
-                message: "Você já tem este download disponível na sua página de downloads.",
-            );
-            return;
+        if ($itemId) {
+            $item = Item::find($itemId);
+            if ($item && $item->type === "sites") {
+                $this->dispatch(
+                    "notify",
+                    message: "Itens do tipo sites devem ser comprados.",
+                );
+                return;
+            }
         }
-        $download = Download::create([
-            "user_id" => $user->id,
-            "collection_id" => $collectionId,
-            "status" => "pending",
-        ]);
 
-        ProcessDownload::dispatch($download);
+        $result = $action->run($user, $this->collection);
 
-        $this->dispatch(
-            "notify",
-            message: "Seu download foi iniciado! Vá até a página de downloads para acompanhar.",
-        );
+        $this->dispatch("notify", message: $result["message"]);
     }
 
-    public function render()
+    public function addToCart(int $itemId): void
     {
-        if ($this->isItemView && $this->collectionSlug) {
-            $collection = Collection::with([
-                "items.categories",
-                "categories",
-                "author",
-            ])
-                ->where("slug", $this->collectionSlug)
-                ->first();
+        $user = Auth::user();
 
-            if (!$collection) {
-                abort(404, "Coleção não encontrada");
+        if (!$user) {
+            $this->dispatch("notify", message: "Faça login para adicionar ao carrinho.");
+            return;
+        }
+
+        $item = Item::findOrFail($itemId);
+
+        if ($item->type !== "sites") {
+            $this->dispatch("notify", message: "Este item não pode ser comprado avulso.");
+            return;
+        }
+
+        $cart = Cart::firstOrCreate([
+            "user_id" => $user->id,
+            "status" => "active",
+        ]);
+
+        $hasOtherItems = $cart->items()->where("item_id", "!=", $item->id)->exists();
+        if ($hasOtherItems) {
+            $this->dispatch("notify", message: "Seu carrinho já tem um item. Finalize a compra antes de adicionar outro.");
+            return;
+        }
+
+        $existing = $cart->items()->where("item_id", $item->id)->first();
+
+        if ($existing) {
+            $existing->update([
+                "quantity" => 1,
+            ]);
+        } else {
+            $cart->items()->create([
+                "item_id" => $item->id,
+                "price" => $item->price,
+                "quantity" => 1,
+            ]);
+        }
+
+        $this->dispatch("notify", message: "Item adicionado ao carrinho.");
+        $this->dispatch("cart-updated");
+    }
+
+    public function toggleFavorite(int $itemId): void
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            $this->dispatch("notify", message: "Faça login para salvar itens.");
+            return;
+        }
+
+        $item = Item::findOrFail($itemId);
+
+        $exists = $user->favorites()->where("item_id", $item->id)->exists();
+
+        if ($exists) {
+            $user->favorites()->detach($item->id);
+            $this->dispatch("notify", message: "Item removido dos favoritos.");
+        } else {
+            $user->favorites()->attach($item->id);
+            $this->dispatch("notify", message: "Item salvo nos favoritos.");
+        }
+
+        $this->dispatch("wishlist-updated");
+    }
+
+    public function isFavorited(int $itemId): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->favorites()->where("item_id", $itemId)->exists();
+    }
+
+    public function hasPurchasedItem(int $itemId): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->orders()
+            ->where("status", "paid")
+            ->whereHas("items", fn($q) => $q->where("item_id", $itemId))
+            ->exists();
+    }
+
+    public function hasActiveCartItem(): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->carts()
+            ->where("status", "active")
+            ->whereHas("items")
+            ->exists();
+    }
+
+    public function isItemInCart(int $itemId): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->carts()
+            ->where("status", "active")
+            ->whereHas("items", fn($q) => $q->where("item_id", $itemId))
+            ->exists();
+    }
+
+    public function render(
+        TaxonomyListsQuery $tax,
+        CollectionItemsQuery $itemsQuery,
+        RelatedCollectionsQuery $relatedQuery,
+    ) {
+        // carrega taxonomia (cacheada no Domain)
+        $this->allItemCategories = $tax->itemsCategories();
+
+        // carrega collection com relações necessárias (ajuste author/user conforme seu model)
+        $collection = $this->collection->load(["categories", "author"]);
+
+        $itemsForPreview = $collection
+            ->items()
+            ->select(["id", "images", "image_path"]) // ajuste conforme seu schema
+            ->latest()
+            ->limit(12)
+            ->get();
+
+        $images = [];
+
+        foreach ($itemsForPreview as $it) {
+            // 1) se tiver image_path simples
+            if (!empty($it->image_path)) {
+                $images[] = $it->image_path;
+                if (count($images) === 4) {
+                    break;
+                }
             }
 
-            $query = $collection
-                ->items()
-                ->with("categories")
-                ->when(
-                    $this->search,
-                    fn($q) => $q->where("name", "like", "%{$this->search}%"),
-                )
-                ->when(
-                    $this->selectedItemCategories,
-                    fn($q) => $q->whereHas(
-                        "categories",
-                        fn($q2) => $q2->whereIn(
-                            "categories.id",
-                            $this->selectedItemCategories,
-                        ),
-                    ),
-                )
-                ->orderBy($this->sortField, $this->sortDirection);
-
-            $items = $query->paginate(9);
-
-            // Coleções relacionadas (mesmas categorias da coleção atual)
-            $relatedCollections = Collection::whereHas("categories", function (
-                $q,
-            ) use ($collection) {
-                $q->whereIn(
-                    "categories.id",
-                    $collection->categories->pluck("id"),
-                );
-            })
-                ->where("id", "!=", $collection->id)
-                ->limit(4)
-                ->get();
-
-            return view("livewire.app.collections.view-collection", [
-                "collection" => $collection,
-                "items" => $items,
-                "relatedCollections" => $relatedCollections,
-                "isItemView" => true,
-            ])->title($this->collection->name);
+            // 2) se tiver campo images (json/array)
+            if (!empty($it->images)) {
+                $imgs = is_array($it->images)
+                    ? $it->images
+                    : json_decode($it->images, true);
+                if (is_array($imgs)) {
+                    foreach ($imgs as $img) {
+                        if ($img) {
+                            $images[] = $img;
+                            if (count($images) === 4) {
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        $this->previewImages = $images;
+        $items = $itemsQuery
+            ->build(
+                $collection,
+                $this->search,
+                $this->selectedItemCategories,
+                $this->sortField,
+                $this->sortDirection,
+            )
+            ->paginate(9);
+
+        $relatedCollections = $relatedQuery->run($collection, 4);
+
+        return view("livewire.app.collections.view-collection", [
+            "collection" => $collection,
+            "items" => $items,
+            "relatedCollections" => $relatedCollections,
+        ])
+            ->title($collection->name)
+            ->layout("layouts.app");
     }
 }

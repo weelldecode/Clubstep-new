@@ -11,10 +11,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
+use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -32,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         "hide_collections",
         "hide_followers",
         "hide_following",
+        "locale",
     ];
 
     /**
@@ -161,9 +163,34 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Download::class);
     }
 
+    public function favorites()
+    {
+        return $this->belongsToMany(Item::class, "favorites")->withTimestamps();
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
+    }
+
     public function isOnline(): bool
     {
         return $this->last_seen_at &&
             $this->last_seen_at->gt(now()->subMinutes(5));
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
 }

@@ -4,25 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-   Schema::table('subscriptions', function (Blueprint $table) {
-        $table->boolean('notified_expiring')->default(false);
-    });
-    }
+    public function up(): void {}
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-          Schema::table('subscriptions', function (Blueprint $table) {
-        $table->dropColumn('notified_expiring');
-    });
-    }
+    public function down(): void {}
 };

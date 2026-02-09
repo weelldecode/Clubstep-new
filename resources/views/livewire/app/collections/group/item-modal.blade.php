@@ -1,202 +1,274 @@
-<!-- Modal (substitui o anterior) -->
-<template x-teleport="body">
-    <div x-data="{ open: @entangle('showModal') }" x-show="open" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center"
-        @keydown.escape.window="open = false">
-        <!-- Fundo -->
-        <div x-show="open" x-transition.opacity.duration.300ms class="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            @click="open = false"></div>
+@if ($showModal && $selectedItem)
+    @php
+        $itemImages = is_array($selectedItem->images)
+            ? $selectedItem->images
+            : json_decode($selectedItem->images, true);
+        $imagesToShow = array_slice($itemImages ?? [], 0, 4);
+        $author = $collection->user;
+        $hasPurchased = $selectedItem->type === 'sites' ? $this->hasPurchasedItem($selectedItem->id) : false;
+    @endphp
 
-        <!-- Caixa do modal -->
-        <div x-show="open" x-transition:enter="transform transition ease-out duration-300"
-            x-transition:enter-start="scale-90 opacity-0" x-transition:enter-end="scale-100 opacity-100"
+    <div
+        x-data="{
+            open: false,
+            close() {
+                this.open = false;
+                setTimeout(() => $wire.closeModal(), 220);
+            }
+        }"
+        x-init="$nextTick(() => open = true)"
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-3 md:p-6"
+        @keydown.escape.window="close()"
+    >
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-250"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            @click="close()"
+        ></div>
+
+        <div
+            x-show="open"
+            x-transition:enter="transform transition ease-out duration-250"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
             x-transition:leave="transform transition ease-in duration-200"
-            x-transition:leave-start="scale-100 opacity-100" x-transition:leave-end="scale-90 opacity-0"
-            class="relative bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-5xl w-[100vw] md:w-[60rem] p-6"
-            role="dialog" aria-modal="true">
-            <!-- Fechar -->
+            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+            x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+            class="relative w-full max-w-6xl overflow-hidden rounded-2xl border border-zinc-200/70 bg-white/95 shadow-2xl dark:border-zinc-800/80 dark:bg-zinc-950/95"
+            role="dialog"
+            aria-modal="true"
+            @click.stop
+        >
             <button
-                class="absolute top-5 right-5 h-6 w-6 flex items-center justify-center bg-zinc-100 dark:bg-zinc-700 rounded-full text-zinc-600 dark:text-zinc-300 hover:text-red-600  hover:bg-zinc-200 dark:hover:bg-zinc-800  transition-all duration-300 cursor-pointer"
-                @click="open = false" aria-label="Fechar modal">
+                class="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 transition hover:bg-zinc-200 hover:text-red-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                @click="close()"
+                aria-label="Fechar modal"
+            >
                 <flux:icon.x class="size-5" />
             </button>
 
-            @if ($selectedItem)
-                <div class="sm:block md:flex  gap-5">
-                    <div class="">
-                        @php
-                            // junta todas as imagens dos itens da coleção em um array único
-                            $allImages = [];
-                            $itemImages = is_array($selectedItem->images)
-                                ? $selectedItem->images
-                                : json_decode($selectedItem->images, true);
-                            if ($itemImages) {
-                                $allImages = array_merge($allImages, $itemImages);
-                            }
-
-                            // pega só as primeiras 4 imagens do array completo
-                            $imagesToShow = array_slice($allImages, 0, 4);
-                        @endphp
-
-                        @if (!empty($imagesToShow))
-                            <div class="grid grid-cols-2 gap-1">
-                                @foreach ($imagesToShow as $i => $img)
-                                    <img src="{{ asset('storage/' . $img) }}" alt="{{ $collection->name }}"
-                                        class=" sm:w-full md:w-[310px]  object-cover rounded-lg transition-all duration-700 opacity-100 " />
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="grid grid-cols-2 gap-1">
-                                @for ($i = 0; $i < 1; $i++)
-                                    <div
-                                        class=" sm:w-full md:w-[310px] bg-zinc-200 flex items-center justify-center gap-5 text-zinc-400 rounded-lg">
-                                        Sem imagem
-                                    </div>
-                                @endfor
-                            </div>
-                        @endif
-
-                    </div>
-                    <div class="w-[35rem] flex flex-col justify-between gap-4">
-                        <div class="">
-
-                            <h2 class="text-2xl font-semibold mb-2">{{ $selectedItem->name }}</h2>
-                            @if (!empty($selectedItem->description))
-                                <p class="line-clamp-3 text-zinc-600 dark:text-zinc-300 mb-4 text-sm">
-                                    {{ $selectedItem->description }}
-                                </p>
-                            @endif
-
-                            <flux:separator />
-                            <div class="flex items-center gap-4 mt-4">
-
-                                <flux:button class="w-full" size="sm">
-                                    Salvar
-                                </flux:button>
-                                <flux:button class="w-full" variant="primary" color="red" size="sm">
-                                    Denunciar
-                                </flux:button>
-                            </div>
+            <div class="grid gap-0 md:grid-cols-[1.05fr_0.95fr]">
+                <div class="border-b border-zinc-200/70 bg-zinc-100/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 md:border-b-0 md:border-r md:p-5">
+                    @if (!empty($imagesToShow))
+                        <div class="grid grid-cols-2 gap-2">
+                            @foreach ($imagesToShow as $img)
+                                <img
+                                    src="{{ asset('storage/' . $img) }}"
+                                    alt="{{ $selectedItem->name }}"
+                                    class="h-[180px] w-full rounded-xl object-cover md:h-[220px]"
+                                />
+                            @endforeach
                         </div>
-                        <div class="flex flex-col w-full gap-5">
-                            <div class="  flex flex-col items-center gap-6">
-                                <div class="flex flex-col gap-2 w-full border border-accent p-4 rounded bg-accent/5">
-
-                                    <h1 class="text-base font-bold text-accent flex items-center gap-2"> Arquivo Premium
-                                    </h1>
-                                    <p class="text-justify  text-sm font-medium text-zinc-600 dark:text-zinc-100">
-                                        Este arquivo está disponível exclusivamente apenas para membros Club, crie uma
-                                        conta ou vire um Assinante Club para fazer o Download do pacote.
-                                    </p>
-                                </div>
-                                @auth
-                                    @if (!auth()->user()->activeSubscription())
-                                     <div x-data="{ hovered: false }" class="relative w-full">
-                                        <a @mouseenter="hovered = true" @mouseleave="hovered = false" href="/plans"
-                                            class="relative group overflow-hidden border border-transparent bg-accent hover:bg-accent/80 text-white px-6 py-3 w-full rounded text-sm font-medium flex items-center justify-center gap-2 transition duration-300">
-
-
-                                            <!-- Ícone -->
-                                            <svg class="w-4 h-4 mr-2" fill="currentColor"
-                                                viewBox="0 0 20 20"><!-- ícone aqui --></svg>
-
-                                            <!-- Texto com animação -->
-                                            <span x-show="!hovered" x-transition:enter="transition transform duration-300"
-                                                x-transition:enter-start="opacity-0 translate-y-2"
-                                                x-transition:enter-end="opacity-100 translate-y-0"
-                                                x-transition:leave="transition transform duration-300"
-                                                x-transition:leave-start="opacity-100 translate-y-0"
-                                                x-transition:leave-end="opacity-0 -translate-y-2" class="absolute">Download
-                                                (25MB)
-                                            </span>
-
-                                            <span x-show="hovered" x-transition:enter="transition transform duration-300"
-                                                x-transition:enter-start="opacity-0 translate-y-2"
-                                                x-transition:enter-end="opacity-100 translate-y-0"
-                                                x-transition:leave="transition transform duration-300"
-                                                x-transition:leave-start="opacity-100 translate-y-0"
-                                                x-transition:leave-end="opacity-0 -translate-y-2" class="absolute">Assine o
-                                                Premium </span>
-                                        </a>
-                                    </div>
-                                    @else
-
-                                        <flux:button  wire:click="startDownload({{ $selectedItem->id }})"
-                                            class="w-full" variant="primary" icon:trailing="arrow-down-tray">
-                                            Baixar Arquivo (46MB)
-                                        </flux:button>
-                                    @endif
-                                @else
-                                    <div x-data="{ hovered: false }" class="relative w-full">
-                                        <a @mouseenter="hovered = true" @mouseleave="hovered = false" href="/plans"
-                                            class="relative group overflow-hidden border border-transparent bg-accent hover:bg-accent/80 text-white px-6 py-3 w-full rounded text-sm font-medium flex items-center justify-center gap-2 transition duration-300">
-
-
-                                            <!-- Ícone -->
-                                            <svg class="w-4 h-4 mr-2" fill="currentColor"
-                                                viewBox="0 0 20 20"><!-- ícone aqui --></svg>
-
-                                            <!-- Texto com animação -->
-                                            <span x-show="!hovered" x-transition:enter="transition transform duration-300"
-                                                x-transition:enter-start="opacity-0 translate-y-2"
-                                                x-transition:enter-end="opacity-100 translate-y-0"
-                                                x-transition:leave="transition transform duration-300"
-                                                x-transition:leave-start="opacity-100 translate-y-0"
-                                                x-transition:leave-end="opacity-0 -translate-y-2" class="absolute">Download
-                                                (25MB)
-                                            </span>
-
-                                            <span x-show="hovered" x-transition:enter="transition transform duration-300"
-                                                x-transition:enter-start="opacity-0 translate-y-2"
-                                                x-transition:enter-end="opacity-100 translate-y-0"
-                                                x-transition:leave="transition transform duration-300"
-                                                x-transition:leave-start="opacity-100 translate-y-0"
-                                                x-transition:leave-end="opacity-0 -translate-y-2" class="absolute">Assine o
-                                                Premium </span>
-                                        </a>
-                                    </div>
-                                @endauth
-                            </div>
-                            <div
-                                class="relative flex items-center gap-3 text-base font-medium text-zinc-700 dark:text-zinc-50">
-                                @php
-                                    $author = $collection->user;
-                                @endphp
-
-
-                        @if ($author)
-
-                            <div class="mt-6 flex items-center gap-4">
-                                {{-- Avatar --}}
-                                @if ($author->profile_image)
-                                    <flux:avatar size="lg"
-                                        src="{{ asset('storage/' . $author->profile_image) }}" />
-                                @else
-                                    <div
-                                        class="w-10 h-10 rounded-full bg-zinc-300 flex items-center justify-center text-sm font-bold text-white">
-                                        {{ $author->initials() }}
-                                    </div>
-                                @endif
-                                <div>
-                                    <flux:heading size="lg">{{ $author->name }}</flux:heading>
-                                    <flux:text>
-                                        @if ($author->type === 'verified')
-                                            <flux:text class="flex items-center gap-1">Verificado <flux:icon.badge-check
-                                                    class="size-4" /></flux:text>
-                                        @endif
-                                    </flux:text>
-                                </div>
-                            </div>
-                        @endif
-
-                            </div>
-                            <!-- Exemplo extra: baixar via rota (se quiser headers bonitinhos)
-          -->
-                        </div>
-                    </div>
+                    @else
+                        <img
+                            src="{{ asset('images/placeholders/item-default.svg') }}"
+                            alt="{{ $selectedItem->name }}"
+                            class="h-[320px] w-full rounded-xl object-cover"
+                        />
+                    @endif
                 </div>
 
+                <div class="flex flex-col gap-5 p-5 md:p-6">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                            {{ $selectedItem->name }}
+                        </h2>
 
-            @endif
+                        @if (!empty($selectedItem->description))
+                            <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+                                {{ $selectedItem->description }}
+                            </p>
+                        @endif
+
+                        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                            <span class="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-1 font-semibold text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700">
+                                {{ t('Premium') }}
+                            </span>
+                            <span class="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-1 font-semibold text-accent ring-1 ring-accent/20">
+                                {{ t('Protected file') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    @if ($selectedItem->type === 'sites')
+                        <div class="rounded-xl border border-accent/30 bg-accent/5 p-4">
+                            <h3 class="text-sm font-bold text-accent">{{ t('Single purchase') }}</h3>
+                            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-200">
+                                {{ t('This site is sold separately. Add to cart to complete the purchase.') }}
+                            </p>
+                            <p class="mt-3 text-xl font-black text-zinc-900 dark:text-white">
+                                R$ {{ number_format((float) $selectedItem->price, 2, ',', '.') }}
+                            </p>
+                        </div>
+                    @else
+                        <div class="rounded-xl border border-accent/30 bg-accent/5 p-4">
+                            <h3 class="text-sm font-bold text-accent">{{ t('Premium file') }}</h3>
+                            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-200">
+                                {{ t('This file is available to Club members. Log in or subscribe to unlock the download.') }}
+                            </p>
+                        </div>
+                    @endif
+
+                    @php
+                        $isFavorited = $this->isFavorited($selectedItem->id);
+                    @endphp
+
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <flux:button
+                            class="w-full"
+                            size="sm"
+                            variant="{{ $isFavorited ? 'primary' : 'outline' }}"
+                            wire:click="toggleFavorite({{ $selectedItem->id }})"
+                        >
+                            {{ $isFavorited ? t('Saved') : t('Save') }}
+                        </flux:button>
+                        <flux:button class="w-full" variant="primary" color="red" size="sm" wire:click="openReport({{ $selectedItem->id }})">
+                            {{ t('Report') }}
+                        </flux:button>
+                    </div>
+
+                    @auth
+                        @if ($selectedItem->type === 'sites')
+                            @if ($hasPurchased)
+                                <a
+                                    href="{{ route('items.download', $selectedItem) }}"
+                                    class="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                                >
+                                    {{ t('Download file') }}
+                                </a>
+                            @else
+                                @php
+                                    $cartHasItem = $this->hasActiveCartItem();
+                                @endphp
+                                @if ($cartHasItem)
+                                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                                        {{ t('Your cart already has one item. Finish the purchase to add another.') }}
+                                    </div>
+                                    <a
+                                        href="{{ route('cart.index') }}"
+                                        class="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                                    >
+                                        {{ t('Checkout') }}
+                                    </a>
+                                @else
+                                    <flux:button
+                                        wire:click="addToCart({{ $selectedItem->id }})"
+                                        class="w-full"
+                                        variant="primary"
+                                    >
+                                        {{ t('Add to cart') }}
+                                    </flux:button>
+                                    <a
+                                        href="{{ route('cart.index') }}"
+                                        class="inline-flex w-full items-center justify-center rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                                    >
+                                        {{ t('View cart') }}
+                                    </a>
+                                @endif
+                            @endif
+                        @elseif (!auth()->user()->activeSubscription())
+                            <a
+                                href="/plans"
+                                class="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                            >
+                                {{ t('Subscribe to download') }}
+                            </a>
+                        @else
+                            <flux:button
+                                wire:click="startDownload({{ $selectedItem->id }})"
+                                class="w-full"
+                                variant="primary"
+                                icon:trailing="arrow-down-tray"
+                            >
+                                {{ t('Download file') }}
+                            </flux:button>
+                        @endif
+                    @else
+                        @if ($selectedItem->type === 'sites')
+                            <a
+                                href="/login"
+                                class="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                            >
+                                {{ t('Log in to buy') }}
+                            </a>
+                        @else
+                            <a
+                                href="/plans"
+                                class="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                            >
+                                {{ t('Subscribe to download') }}
+                            </a>
+                        @endif
+                    @endauth
+
+                    @if ($author)
+                        <div class="mt-1 flex items-center gap-3 rounded-xl border border-zinc-200/70 bg-white/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+                            @if ($author->profile_image)
+                                <flux:avatar size="lg" src="{{ asset('storage/' . $author->profile_image) }}" />
+                            @else
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-300 text-sm font-bold text-white">
+                                    {{ $author->initials() }}
+                                </div>
+                            @endif
+                            <div>
+                                <flux:heading size="lg">{{ $author->name }}</flux:heading>
+                                @if ($author->type === 'verified')
+                                    <flux:text class="flex items-center gap-1 text-xs">
+                                        Verificado
+                                        <flux:icon.badge-check class="size-4" />
+                                    </flux:text>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
-</template>
+@endif
+
+<flux:modal wire:model="showReportModal" class="max-w-lg">
+    <div class="space-y-4">
+        <div>
+        <flux:heading size="lg">{{ t('Report item') }}</flux:heading>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ t('Explain the reason for the report.') }}</p>
+        </div>
+
+        <div class="grid gap-3">
+            <div>
+                <flux:label>{{ t('Reason') }}</flux:label>
+                <x-select
+                    wire:model.live="reportForm.reason"
+                    placeholder="Selecione o motivo"
+                    :options="[
+                        ['id' => 'copyright', 'name' => t('Copyright')],
+                        ['id' => 'spam', 'name' => t('Spam')],
+                        ['id' => 'fraud', 'name' => t('Fraud')],
+                        ['id' => 'inappropriate', 'name' => t('Inappropriate content')],
+                        ['id' => 'other', 'name' => t('Other')],
+                    ]"
+                    option-label="name"
+                    option-value="id"
+                />
+                @error('reportForm.reason') <div class="mt-1 text-xs text-red-500">{{ $message }}</div> @enderror
+            </div>
+
+            <div>
+                <flux:label>{{ t('Message (optional)') }}</flux:label>
+                <flux:textarea rows="4" wire:model.live="reportForm.message" />
+                @error('reportForm.message') <div class="mt-1 text-xs text-red-500">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+            <flux:button variant="outline" wire:click="closeReport">{{ t('Cancel') }}</flux:button>
+            <flux:button wire:click="submitReport">{{ t('Send report') }}</flux:button>
+        </div>
+    </div>
+</flux:modal>

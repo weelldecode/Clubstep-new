@@ -33,7 +33,7 @@ $classes = Flux::classes()
     x-on:keydown.enter.prevent.stop="$refs.input.click()"
     x-on:keydown.space.prevent.stop
     x-on:keyup.space.prevent.stop="$refs.input.click()"
-    x-on:change="$refs.name.textContent = $event.target.files[1] ? ($event.target.files.length + ' {!! __('files') !!}') : ($event.target.files[0]?.name || '{!! __('No file chosen') !!}')"
+    x-on:change="$refs.name.textContent = $event.target.files[1] ? ($event.target.files.length + ' {!! t('files') !!}') : ($event.target.files[0]?.name || '{!! t('No file chosen') !!}')"
 >
     <input
         x-ref="input"
@@ -56,13 +56,13 @@ $classes = Flux::classes()
 
     <flux:button as="div" class="cursor-pointer" :$size aria-hidden="true">
         <?php if ($multiple) : ?>
-            {!! __('Choose files') !!}
+            {!! t('Choose files') !!}
         <?php else : ?>
-            {!! __('Choose file') !!}
+            {!! t('Choose file') !!}
         <?php endif; ?>
     </flux:button>
 
     <div x-ref="name" class="cursor-default select-none truncate whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400 font-medium" aria-hidden="true">
-        {!! __('No file chosen') !!}
+        {!! t('No file chosen') !!}
     </div>
 </div>

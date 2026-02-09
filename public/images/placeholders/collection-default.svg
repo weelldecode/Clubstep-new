@@ -1,0 +1,29 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1329"/>
+      <stop offset="1" stop-color="#162B63"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1180 220) rotate(145.2) scale(480 320)">
+      <stop stop-color="#2D6BFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#2D6BFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wave" x1="0" y1="530" x2="1600" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1C3D8F" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#2D6BFF" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+
+  <path d="M0 610C154 548 291 530 462 566C629 600 774 671 972 666C1152 661 1329 575 1600 604V900H0V610Z" fill="url(#wave)"/>
+  <path d="M0 680C188 624 359 628 524 664C692 701 860 761 1035 748C1210 734 1384 648 1600 664V900H0V680Z" fill="#0C1B45" fill-opacity="0.75"/>
+
+  <rect x="128" y="130" width="188" height="132" rx="18" fill="white" fill-opacity="0.07" stroke="white" stroke-opacity="0.15"/>
+  <rect x="338" y="182" width="146" height="102" rx="14" fill="white" fill-opacity="0.06" stroke="white" stroke-opacity="0.14"/>
+  <rect x="508" y="120" width="172" height="120" rx="16" fill="white" fill-opacity="0.05" stroke="white" stroke-opacity="0.14"/>
+
+  <text x="132" y="812" fill="#E7EEFF" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="700">Collection Preview</text>
+  <text x="132" y="858" fill="#B5C6F8" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="500">ClubStep</text>
+</svg>

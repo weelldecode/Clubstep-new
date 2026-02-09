@@ -1,94 +1,280 @@
-<div class="space-y-12 px-10 md:px-8  mt-42">
-    <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl ">
-        <div class="grid auto-rows-min gap-4 md:grid-cols-2">
-            <div class="relative aspect-2/1  overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
+<style>
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .fade-up { animation: fadeUp .6s ease-out both; }
+    .fade-in { animation: fadeIn .6s ease-out both; }
+    .delay-1 { animation-delay: .08s; }
+    .delay-2 { animation-delay: .16s; }
+    .delay-3 { animation-delay: .24s; }
+    .delay-4 { animation-delay: .32s; }
+</style>
+
+<div class="container mx-auto mt-10">
+    {{-- Header / Hero Banner --}}
+    <div class="mb-8 fade-up">
+        <div
+            class="relative overflow-hidden rounded-2xl border border-zinc-200/70 dark:border-zinc-800/80 min-h-[220px] md:min-h-[260px]">
+            <div class="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900"></div>
+            <div class="absolute -left-20 -top-16 h-48 w-48 rounded-full bg-accent/35 blur-3xl"></div>
+            <div class="absolute right-[-4rem] top-8 h-56 w-56 rounded-full bg-blue-400/25 blur-3xl"></div>
+            <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 to-transparent"></div>
+            <div class="absolute inset-0 opacity-20"
+                style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.35) 1px, transparent 0); background-size: 22px 22px;">
             </div>
-            <div class="relative aspect-2/1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
+
+            <div class="relative flex h-full min-h-[220px] md:min-h-[260px] flex-col justify-end gap-3 p-6 md:p-8">
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight text-white md:text-4xl">
+                        {{ t('Create. Publish. Scale.') }}
+                    </h1>
+                    <p class="mt-1 text-sm md:text-base text-white/80">
+                        {{ t('Premium templates and collections to speed up your creative flow.') }}
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <flux:button variant="primary" href="{{ route('collection.index') }}">{{ t('Explore') }}</flux:button>
+                </div>
             </div>
         </div>
-
     </div>
-    {{-- Seção Recomendadas --}}
-    <section class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold">Coleções Recomendadas</h2>
-            <flux:button  variant="primary"  href="{{ route('collection.index') }}"  >
-                Ver todas
-            </flux:button >
-        </div>
 
-        <div class="flex gap-4 overflow-x-auto scrollbar-hide py-2">
-            @foreach($recomendadas  as $index => $colecao)
-                <div class="min-w-[350px] max-w-[350px] flex-shrink-0">
-                    <x-card-collection :colecao="$colecao" :index="$index" />
+    {{-- 3 Colunas --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {{-- COLUNA ESQUERDA (Sidebar) --}}
+        <aside class="lg:col-span-3 fade-up delay-1">
+            <div class="lg:sticky lg:top-36 space-y-4">
+                {{-- Card: Busca / Ações --}}
+                <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold text-zinc-900 dark:text-white">{{ t('Shortcuts') }}</p>
+                    </div>
+
+                    <div class="mt-3 grid gap-2">
+                        <a href="{{ route('collection.index') }}"
+                           class="rounded-xl px-3 py-2 text-sm bg-zinc-50/80 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                            {{ t('View all collections') }}
+                        </a>
+                        <a href="{{ route('collection.index') }}?sort=trending"
+                           class="rounded-xl px-3 py-2 text-sm bg-zinc-50/80 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                            {{ t('Trending') }}
+                        </a>
+                        <a href="{{ route('collection.index') }}?sort=recent"
+                           class="rounded-xl px-3 py-2 text-sm bg-zinc-50/80 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                            {{ t('Recent') }}
+                        </a>
+                    </div>
                 </div>
+
+                {{-- Card: Categorias populares (lista compacta) --}}
+                <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold text-zinc-900 dark:text-white">{{ t('Categories') }}</p>
+                        <a href="{{ route('collection.index') }}"
+                           class="text-sm text-accent hover:underline">{{ t('View all') }}</a>
+                    </div>
+
+                    <div class="mt-3 space-y-2">
+                        @foreach ($categories->take(8) as $cat)
+                            <a href="{{ route('collection.category', ['category' => $cat->slug]) }}"
+                               class="group flex items-center justify-between rounded-xl px-3 py-2 bg-zinc-50/80 dark:bg-zinc-900/60 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">
+                                    {{ $cat->name }}
+                                </span>
+                                <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ $cat->items_count }}
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        {{-- COLUNA CENTRAL (Feed) --}}
+        <main class="lg:col-span-6 space-y-8 fade-up delay-2">
+            {{-- Destaque: Categorias populares (cards horizontais) --}}
+            <section class="space-y-3 fade-up delay-2">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl md:text-lg font-bold text-zinc-900 dark:text-white">{{ t('Popular Categories') }}</h2>
+                    <flux:button variant="primary" href="{{ route('collection.index') }}">{{ t('View all') }}</flux:button>
+                </div>
+
+                <div class="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                    @foreach ($categories as $cat)
+                        @php
+                            $thumb = $cat->image_url;
+                        @endphp
+
+                        <a href="{{ route('collection.category', ['category' => $cat->slug]) }}"
+                           class="group relative min-w-[280px] max-w-[280px] h-[160px] rounded-2xl overflow-hidden border border-zinc-200/40 dark:border-zinc-800/60 bg-zinc-100 dark:bg-zinc-900 transition hover:-translate-y-1 hover:shadow-lg">
+                            <img
+                                src="{{ $thumb }}"
+                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt=""
+                            />
+                            <div class="absolute inset-0 bg-gradient-to-tr from-black/70 via-black/30 to-transparent"></div>
+
+                            <div class="absolute inset-0 p-4 flex flex-col justify-end">
+                                <div class="flex items-end justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-white font-semibold truncate">{{ $cat->name }}</p>
+                                        <p class="text-white/80 text-xs">{{ $cat->items_count }} {{ t('items') }}</p>
+                                    </div>
+                                    <span class="text-white/90 text-xs px-2 py-1 rounded-full bg-white/10 border border-white/10">
+                                        {{ t('Explore') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+
+            {{-- Recomendadas --}}
+            <section class="space-y-3 fade-up delay-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl md:text-lg font-bold text-zinc-900 dark:text-white">{{ t('Recommended Collections') }}</h2>
+                    <flux:button variant="primary" href="{{ route('collection.index') }}">{{ t('View all') }}</flux:button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach ($recomendadas as $index => $colecao)
+                        <x-card-collection :colecao="$colecao" :index="$index" />
+                    @endforeach
+                </div>
+            </section>
+
+            @auth
+                {{-- Dos Seguidos --}}
+                <section class="space-y-3 fade-up delay-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl md:text-lg font-bold text-zinc-900 dark:text-white">{{ t('From who you follow') }}</h2>
+                        <flux:button href="{{ route('collection.index') }}" variant="primary">{{ t('View all') }}</flux:button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @forelse($dosSeguidos as $index => $colecao)
+                            <x-card-collection :colecao="$colecao" :index="$index" />
+                        @empty
+                            <div class="rounded-2xl w-full border border-zinc-200/70 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 p-5 text-sm text-zinc-500 dark:text-zinc-100">
+                                {{ t('There are no new collections from creators you follow yet.') }}
+                            </div>
+                        @endforelse
+                    </div>
+                </section>
+            @endauth
+
+            {{-- Feed por Categorias --}}
+            @foreach ($categorias as $categoria)
+                <section class="space-y-3 fade-up">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl md:text-lg font-bold text-zinc-900 dark:text-white">{{ $categoria->name }}</h2>
+                        <flux:button href="{{ route('collection.index') }}" variant="primary">{{ t('View all') }}</flux:button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach ($categoria->collections->take(6) as $index => $colecao)
+                            <x-card-collection :colecao="$colecao" :index="$index" />
+                        @endforeach
+                    </div>
+                </section>
             @endforeach
-        </div>
-    </section>
-    @auth
-    {{-- Seção Dos que você segue --}}
-    <section class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold">Coleções de quem você segue</h2>
-            <flux:button  href="{{ route('collection.index') }}"  variant="primary">
-                Ver todas
-            </flux:button >
-        </div>
+        </main>
 
-        <div class="flex gap-4 overflow-x-auto scrollbar-hide py-2">
-            @forelse($dosSeguidos   as $index => $colecao)
-                <div class="min-w-[350px] max-w-[350px] flex-shrink-0">
-                  <x-card-collection :colecao="$colecao"    :index="$index" />
+        {{-- COLUNA DIREITA (Sidebar) --}}
+        <aside class="lg:col-span-3 fade-up delay-3">
+            <div class="lg:sticky lg:top-36 space-y-4">
+                {{-- Autores em destaque --}}
+                <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold text-zinc-900 dark:text-white">{{ t('Featured Creators') }}</p>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-3 gap-3">
+                        @foreach ($featuredArtists as $user)
+                            <a href="/profile/{{ $user->slug }}"
+                               class="group text-center">
+                                @php $avatar = $user->avatar(); @endphp
+
+                                @if ($avatar['type'] === 'image')
+                                    <img src="{{ $avatar['value'] }}" alt="{{ $user->name }}"
+                                         class="mx-auto h-14 w-14 rounded-full object-cover ring-2 ring-transparent group-hover:ring-accent/60 transition">
+                                @else
+                                    <div class="mx-auto h-14 w-14 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center font-bold text-zinc-700 dark:text-zinc-200">
+                                        {{ $avatar['value'] }}
+                                    </div>
+                                @endif
+
+                                <p class="mt-2 text-xs font-semibold text-zinc-700 dark:text-zinc-100 truncate">
+                                    {{ $user->name }}
+                                </p>
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
-            @empty
-                <p class="text-gray-500">Ainda não há coleções novas dos artistas que você segue.</p>
-            @endforelse
-        </div>
-    </section>
-    @endauth
-    <section class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold">Autores em Destaque</h2>
 
-        </div>
+                {{-- Mais vendidos --}}
+                <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold text-zinc-900 dark:text-white">{{ t('Best sellers') }}</p>
+                    </div>
 
-        <div class="flex gap-4 overflow-x-auto scrollbar-hide py-2">
-            @foreach($featuredArtists as $user)
-                <div class="min-w-[120px] flex-shrink-0 text-center hover:-translate-y-1  transition-all duration-500">
-                    <a href="/profile/{{ $user->slug }}">
-                    @php $avatar = $user->avatar(); @endphp
-                    @if($avatar['type'] === 'image')
-                        <img src="{{ $avatar['value'] }}" alt="{{ $user->name }}" class="w-20 h-20 rounded-full object-cover mx-auto">
+                    @if ($bestSellers && $bestSellers->count())
+                        <div class="mt-3 space-y-2">
+                            @foreach ($bestSellers as $item)
+                                <a
+                                    href="{{ $item->collection ? route('collection.show', $item->collection) : '#' }}"
+                                    class="flex items-center gap-3 rounded-xl border border-zinc-200/60 bg-white/70 px-3 py-2 text-sm transition hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900/60 dark:hover:bg-zinc-800"
+                                >
+                                    <img
+                                        src="{{ $item->preview_url }}"
+                                        class="h-10 w-14 rounded-md border border-zinc-200/60 object-cover dark:border-zinc-800"
+                                        alt="{{ $item->name }}"
+                                    />
+                                    <div class="min-w-0 flex-1">
+                                        <div class="truncate font-semibold text-zinc-800 dark:text-zinc-100">
+                                            {{ $item->name }}
+                                        </div>
+                                        <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
+                                            {{ (int) ($item->sold_qty ?? 0) }} {{ t('sold') }}
+                                        </div>
+                                    </div>
+                                    <div class="text-right text-xs font-semibold text-accent">
+                                        R$ {{ number_format((float) $item->price, 2, ',', '.') }}
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
                     @else
-                        <div class="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold text-gray-700 mx-auto">
-                            {{ $avatar['value'] }}
+                        <div class="mt-3 rounded-xl border border-zinc-200/70 bg-white/70 p-3 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300">
+                            {{ t('No sales yet.') }}
                         </div>
                     @endif
-                    <p class="text-sm mt-2 font-bold text-zinc-700 dark:text-zinc-50 truncate">{{ $user->name }}</p></a>
                 </div>
-            @endforeach
-        </div>
-    </section>
-    {{-- Categorias --}}
-    @foreach($categorias as $categoria)
-        <section class="space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-3xl font-bold">{{ $categoria->name }}</h2>
-                <flux:button  href="{{ route('collection.index') }}"   variant="primary">
-                    Ver todas
-                </flux:button >
-            </div>
 
-            <div class="flex gap-4 overflow-x-auto scrollbar-hide py-2">
-                @foreach($categoria->collections  as $index => $colecao)
-                    <div class="min-w-[350px] max-w-[350px] flex-shrink-0">
-                      <x-card-collection :colecao="$colecao" :index="$index" />
+                {{-- Card: Tips / Trending --}}
+                <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <p class="font-semibold text-zinc-900 dark:text-white">{{ t('Trending') }}</p>
+                    <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        {{ t('See collections growing in followers and views.') }}
+                    </p>
+
+                    <div class="mt-3">
+                        <a href="{{ route('collection.index') }}?sort=trending"
+                           class="inline-flex items-center justify-center w-full rounded-md px-3 py-2 text-sm
+                                  bg-accent text-white hover:opacity-90 transition">
+                            {{ t('View trending') }}
+                        </a>
                     </div>
-                @endforeach
+                </div>
             </div>
-        </section>
-    @endforeach
-
+        </aside>
+    </div>
 </div>

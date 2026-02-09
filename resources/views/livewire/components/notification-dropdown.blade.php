@@ -5,7 +5,13 @@
 
         @forelse($notifications as $notification)
             <div class="px-4 py-2 border-b">
-                {{ $notification->data['message'] }}
+                @if(!empty($notification->data['url']))
+                    <a href="{{ $notification->data['url'] }}" class="text-sm text-zinc-800 dark:text-zinc-100 hover:underline">
+                        {{ $notification->data['message'] }}
+                    </a>
+                @else
+                    {{ $notification->data['message'] }}
+                @endif
                 <flux:menu.item wire:click="markAsRead('{{ $notification->id }}')" class="text-xs text-blue-500">Marcar lida</flux:menu.item>
             </div>
             <flux:menu.separator />

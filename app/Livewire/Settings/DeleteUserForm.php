@@ -8,17 +8,22 @@ use Livewire\Component;
 
 class DeleteUserForm extends Component
 {
-    public string $password = '';
+    public string $pin = '';
 
     /**
      * Delete the currently authenticated user.
      */
     public function deleteUser(Logout $logout): void
     {
-        
         $this->validate([
-            'password' => ['required', 'string', 'current_password'],
+            'pin' => ['required', 'digits:6'],
         ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($this->pin, Auth::user()->pin)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'pin' => __('PIN inválido.'),
+            ]);
+        }
 
         tap(Auth::user(), $logout(...))->delete();
 

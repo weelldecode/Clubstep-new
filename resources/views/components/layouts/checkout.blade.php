@@ -5,13 +5,11 @@
     @include('partials.head')
 </head>
 
-<body class="min-h-screen bg-white dark:bg-white">
+<body class="min-h-screen bg-white">
+    <x-site-loader />
+ 
 
-    <flux:main container>
-
-        {{ $slot }}
-    </flux:main>
-
+        {{ $slot }} 
 
     @fluxScripts
 </body>

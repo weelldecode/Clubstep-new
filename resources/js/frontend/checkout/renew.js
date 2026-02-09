@@ -1,13 +1,18 @@
 import { loadMercadoPago } from "@mercadopago/sdk-js";
 
-    console.log('pássadno aesse')
 const el = document.getElementById("checkout-data");
-const amount = parseFloat(el.dataset.planPrice);
-const planId = el.dataset.planId;
-const subscriptionId = el.dataset.subscriptionId;
-const csrf = el.dataset.csrf;
-const processUrl = el.dataset.processUrl;
-const publicKey = el.dataset.publicKey;
+if (!el) {
+    console.error("checkout-data não encontrado.");
+}
+const amount = parseFloat(el?.dataset?.planPrice || "0");
+const planId = el?.dataset?.planId;
+const subscriptionId = el?.dataset?.subscriptionId;
+const processUrl = el?.dataset?.processUrl;
+const publicKey = el?.dataset?.publicKey;
+
+if (!publicKey) {
+    console.error("MP_PUBLIC_KEY ausente no checkout.");
+}
 
 await loadMercadoPago();
 const mp = new MercadoPago(publicKey, { locale: "pt-BR" });
@@ -51,50 +56,72 @@ await bricksBuilder.create("payment", "form-checkout", {
     callbacks: {
         onReady: () => console.log("Brick Payment pronto"),
         onSubmit: async (formData) => {
+            try {
+                const csrfToken = document
+                    .querySelector('meta[name="csrf_token"]')
+                    ?.getAttribute("content");
 
-            const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
-
-            const res = await fetch(processUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrfToken
-                },
-                credentials: "same-origin",  // <== ESSENCIAL para enviar cookies de sessão!
-                body: JSON.stringify({
-                    ...formData,
-                    plan_id: planId,
-                    subscription_id: subscriptionId,
-                })
-            });
-
-
-            const result = await res.json();
-
-            if (result.payment_id) {
-                await switchToStatusScreen();
-                await renderStatusScreen(result.payment_id);
-
-                if (result.status === "approved") {
-                    let countdown = 30;
-                    const statusContainer = document.getElementById("status-screen-container");
-
-                    const countdownEl = document.createElement("p");
-                    countdownEl.className = "my-6 text-lg font-semibold tracking-wide text-center";
-                    statusContainer.appendChild(countdownEl);
-
-                    const interval = setInterval(() => {
-                        countdownEl.textContent = `Você será redirecionado em ${countdown} segundos...`;
-                        countdown--;
-
-                        if (countdown < 0) {
-                            clearInterval(interval);
-                           window.location.href = result.redirect_url;
-                        }
-                    }, 1000);
+                if (!processUrl) {
+                    throw new Error("processUrl ausente.");
                 }
-            } else {
-                alert(result.message || "Erro ao processar pagamento.");
+
+                const res = await fetch(processUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrfToken || "",
+                    },
+                    credentials: "same-origin",  // <== ESSENCIAL para enviar cookies de sessão!
+                    body: JSON.stringify({
+                        ...formData,
+                        plan_id: planId,
+                        subscription_id: subscriptionId,
+                    })
+                });
+
+                let result = {};
+                try {
+                    result = await res.json();
+                } catch (e) {
+                    result = { message: "Resposta inválida do servidor." };
+                }
+
+                if (!res.ok) {
+                    throw new Error(result.message || "Erro ao processar pagamento.");
+                }
+
+                if (result.payment_id) {
+                    await switchToStatusScreen();
+                    await renderStatusScreen(result.payment_id);
+
+                    if (result.status === "approved") {
+                        let countdown = 30;
+                        const statusContainer = document.getElementById("status-screen-container");
+
+                        const countdownEl = document.createElement("p");
+                        countdownEl.className = "my-6 text-lg font-semibold tracking-wide text-center";
+                        statusContainer?.appendChild(countdownEl);
+
+                        const interval = setInterval(() => {
+                            if (countdownEl) {
+                                countdownEl.textContent = `Você será redirecionado em ${countdown} segundos...`;
+                            }
+                            countdown--;
+
+                            if (countdown < 0) {
+                                clearInterval(interval);
+                                if (result.redirect_url) {
+                                    window.location.href = result.redirect_url;
+                                }
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    alert(result.message || "Erro ao processar pagamento.");
+                }
+            } catch (error) {
+                console.error("Erro no checkout:", error);
+                alert(error?.message || "Erro ao processar pagamento.");
             }
         },
         onError: (error) => console.error("Erro:", error)

@@ -3,15 +3,9 @@
 <div class="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
     {{-- Capa da coleção (se tiver item de destaque, pode puxar thumb dele) --}}
     <div class="aspect-video bg-gray-200">
-        @if($colecao->cover ?? false)
-            <img src="{{ asset('storage/' . $colecao->image_path) }}"
-                 alt="{{ $colecao->name }}"
-                 class="w-full h-full object-cover">
-        @else
-            <div class="w-full h-full flex items-center justify-center text-gray-400">
-                📦
-            </div>
-        @endif
+        <img src="{{ $colecao->cover_url }}"
+             alt="{{ $colecao->name }}"
+             class="w-full h-full object-cover">
     </div>
 
     {{-- Conteúdo --}}

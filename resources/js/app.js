@@ -2,11 +2,15 @@ const routeModules = [
     {
         pattern:
             /^\/([a-z]{2}(?:_[A-Z]{2})?)?\/checkout\/pay\/renew\/[\w-]+(\/.*)?$/,
-        loader: () => import("./frontend/checkout/form.js"),
+        loader: () => import("./frontend/checkout/renew.js"),
     },
     {
         pattern: /^\/([a-z]{2}(?:_[A-Z]{2})?)?\/checkout\/pay\/[\w-]+(\/.*)?$/,
         loader: () => import("./frontend/checkout/form.js"),
+    },
+    {
+        pattern: /^\/([a-z]{2}(?:_[A-Z]{2})?)?\/checkout\/order\/[\w-]+(\/.*)?$/,
+        loader: () => import("./frontend/checkout/order.js"),
     },
     {
         // rota de perfil: /xx/profile/slug ou /profile/slug
@@ -14,6 +18,7 @@ const routeModules = [
         loader: () => import("./frontend/profile.js"),
     },
 ];
+
 document.addEventListener("DOMContentLoaded", async () => {
     const path = window.location.pathname;
 

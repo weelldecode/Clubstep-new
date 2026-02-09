@@ -1,62 +1,91 @@
-<div class="mt-28">
+<div class="min-h-screen px-4 py-8 md:px-8">
+    <style>
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp .6s ease-out both; }
+        .delay-1 { animation-delay: .08s; }
+        .delay-2 { animation-delay: .16s; }
+    </style>
 
-    <div class="grid grid-cols-5 grid-rows-1 gap-28 ">
-        <div class="col-span-2 ">
-
-            <div class="absolute top-5 left-5 flex items-center justify-center  mb-5  gap-2">
-                   <a href="{{ route('dashboard') }}"
-                class="w-full ms-2 me-5 flex items-center space-x-2 rtl:space-x-reverse lg:ms-0" wire:navigate>
+    <div class="mx-auto max-w-6xl">
+        <div class="mb-8 flex items-center justify-between fade-up">
+            <a href="{{ route('dashboard') }}" class="inline-flex items-center" wire:navigate>
                 <x-app-logo />
             </a>
-
-            </div>
-            <div class=" py-5 flex flex-col gap-1" id="plan">
-
-                <h1 class="font-medium text-xl tracking-wide text-zinc-600">{{ $plan->name }}</h1>
-                <div class="flex items-center gap-3">
-                    <h4 class="text-4xl font-semibold text-zinc-700 tracking-wide">R$ {{ $plan->price }}</h4>
-                    <span class="w-10 font-medium text-sm text-zinc-500">Por Mês</span>
-                </div>
-
-                <div class="mt-16 flex flex-col justify-center gap-5">
-                    <div>
-                        <div class="flex justify-between items-center font-medium text-zinc-700 text-lg">
-                            Plano: <span class="font-medium text-zinc-700"
-                                data-name="{{ $plan->name }} ">{{ $plan->name }} </span>
-                        </div>
-                        <span class="text-sm font-light text-zinc-500 tracking-wide"> Faturado mensalmente</span>
-                    </div>
-                            <hr class="border border-zinc-100 dark:border-gray-200"> 
-                    <div class="flex justify-between items-center font-medium text-zinc-700 text-lg">
-                        Subtotal: <span class="font-medium text-zinc-700" data-price="{{ $plan->price }}">R$
-                            {{ $plan->price }} </span></div>
-                    <div class="flex justify-between items-center font-medium text-zinc-600 text-base">
-                        Taxa: <span class="font-medium text-zinc-700">R$ 0,00</span></div>
-                            <hr class="border border-zinc-100 dark:border-gray-200"> 
-                    <div class="flex justify-between items-center font-semibold text-zinc-700 text-xl"> Total: <span
-                            class="font-semibold text-zinc-700"> R$ {{ $plan->price }} </span></div>
-
-                </div>
-
-            </div>
+            <span class="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent ring-1 ring-accent/20">
+                {{ t('Secure renewal') }}
+            </span>
         </div>
-        <div class="col-span-3 col-start-3 bg-zinc-50 border border-zinc-200 dark:border-gray-200  rounded-md  ">
-        <div 
-        id="checkout-data"
-        data-plan-price="{{ $plan->price }}"
-        data-plan-id="{{ $plan->id }}"
-        data-csrf="{{ csrf_token() }}"
-        data-process-url="{{ route('checkout.subscription') }}"
-        data-subscription-id="{{ $subscription->id }}"
-        data-public-key="{{ env('MP_PUBLIC_KEY') }}"
-    ></div>
-            <div id="form-checkout"></div>
-            <div id="status-screen-container" style="display: none;"></div>
-            <p></p>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <aside class="lg:col-span-4 fade-up delay-1">
+                <div class="space-y-4 lg:sticky lg:top-8">
+                    <article class="rounded-2xl bg-white p-5 shadow-[0_20px_55px_-45px_rgba(0,0,0,0.25)]">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{{ t('Selected plan') }}</p>
+                        <h1 class="mt-2 text-2xl font-black tracking-tight text-zinc-900">{{ $plan->name }}</h1>
+
+                        <div class="mt-4 flex items-end gap-2">
+                            <span class="text-4xl font-black tracking-tight text-accent">R$ {{ $plan->price }}</span>
+                            <span class="pb-1 text-sm font-medium text-zinc-500">{{ t('per month') }}</span>
+                        </div>
+                    </article>
+
+                    <article class="rounded-2xl bg-white p-5 shadow-[0_20px_55px_-45px_rgba(0,0,0,0.25)]">
+                        <h2 class="text-sm font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('Summary') }}</h2>
+
+                        <div class="mt-4 space-y-3 text-sm">
+                            <div class="flex items-center justify-between text-zinc-600">
+                                <span>{{ t('Plan') }}</span>
+                                <span class="font-semibold text-zinc-800">{{ $plan->name }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-zinc-600">
+                                <span>{{ t('Subtotal') }}</span>
+                                <span class="font-semibold text-zinc-800">R$ {{ $plan->price }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-zinc-600">
+                                <span>{{ t('Fee') }}</span>
+                                <span class="font-semibold text-zinc-800">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <div class="my-4 h-px bg-zinc-200"></div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-base font-bold text-zinc-800">{{ t('Total') }}</span>
+                            <span class="text-xl font-black tracking-tight text-accent">R$ {{ $plan->price }}</span>
+                        </div>
+                    </article>
+                </div>
+            </aside>
+
+            <main class="lg:col-span-8 fade-up delay-2">
+                <section class="rounded-2xl bg-white p-4 shadow-[0_24px_60px_-46px_rgba(0,0,0,0.25)] md:p-6">
+                    <div class="mb-5">
+                        <h2 class="text-xl font-black tracking-tight text-zinc-900">{{ t('Renew subscription') }}</h2>
+                        <p class="mt-1 text-sm text-zinc-500">
+                            {{ t('Complete the details to renew your plan.') }}
+                        </p>
+                    </div>
+
+                    <div
+                        id="checkout-data"
+                        data-plan-price="{{ $plan->price }}"
+                        data-plan-id="{{ $plan->id }}"
+                        data-csrf="{{ csrf_token() }}"
+                        data-process-url="{{ route('checkout.subscription') }}"
+                        data-subscription-id="{{ $subscription->id }}"
+                        data-public-key="{{ env('MP_PUBLIC_KEY') }}"
+                    ></div>
+
+                    <div id="form-checkout"></div>
+                    <div id="status-screen-container" style="display: none;"></div>
+                </section>
+            </main>
         </div>
     </div>
 
-
-    <input type="hidden" id="plan_price" value="{{ $plan->price }} ">
-    <input type="hidden" id="plan_id" value="{{ $plan->id }} ">
+    <input type="hidden" id="plan_price" value="{{ $plan->price }}">
+    <input type="hidden" id="plan_id" value="{{ $plan->id }}">
 </div>

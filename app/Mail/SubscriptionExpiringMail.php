@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Services\EmailTemplateService;
 
 class SubscriptionExpiringMail extends Mailable
 {
@@ -16,6 +17,8 @@ class SubscriptionExpiringMail extends Mailable
 public $user;
 public $daysLeft;
 public $renewUrl;
+public string $subjectLine;
+public string $htmlBody;
 
 
     /**
@@ -26,6 +29,30 @@ public $renewUrl;
     $this->user = $user;
     $this->daysLeft = $daysLeft;
     $this->renewUrl = route('checkout.renew', ['id' => $subscription->plan_id, 'sub_id' => $subscription->id]);
+
+    $data = [
+        "user_name" => $user->name ?? "",
+        "user_email" => $user->email ?? "",
+        "days_left" => $daysLeft,
+        "renew_url" => $this->renewUrl,
+    ];
+
+    $defaultSubject = "Sua assinatura está expirando";
+    $defaultHtml = view("emails.subscription_expiring", [
+        "user" => $this->user,
+        "daysLeft" => $this->daysLeft,
+        "renewUrl" => $this->renewUrl,
+    ])->render();
+
+    $rendered = app(EmailTemplateService::class)->render(
+        "subscription_expiring",
+        $data,
+        $defaultSubject,
+        $defaultHtml,
+    );
+
+    $this->subjectLine = $rendered["subject"];
+    $this->htmlBody = $rendered["html"];
 }
 
     /**
@@ -34,7 +61,7 @@ public $renewUrl;
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Subscription Expiring Mail',
+            subject: $this->subjectLine,
         );
     }
 
@@ -44,11 +71,7 @@ public $renewUrl;
 public function content(): Content
 {
     return new Content(
-        view: 'emails.subscription_expiring',
-        with: [
-            'user' => $this->user,
-            'daysLeft' => $this->daysLeft,
-        ],
+        htmlString: $this->htmlBody,
     );
 }
 
