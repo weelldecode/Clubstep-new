@@ -16,6 +16,16 @@
 </style>
 
 <div class="container mx-auto mt-10">
+    @php
+        $hasRecommended = collect($recomendadas ?? [])->count() > 0;
+        $hasFollowed = collect($dosSeguidos ?? [])->count() > 0;
+        $hasCategoryCollections = collect($categorias ?? [])->contains(
+            fn($c) => isset($c->collections) && $c->collections->isNotEmpty(),
+        );
+        $hasAnyCollections = $hasRecommended || $hasFollowed || $hasCategoryCollections;
+        $hasAnyItems = collect($bestSellers ?? [])->count() > 0;
+    @endphp
+
     {{-- Header / Hero Banner --}}
     <div class="mb-8 fade-up">
         <div
@@ -44,6 +54,32 @@
             </div>
         </div>
     </div>
+
+    @if (!$hasAnyCollections && !$hasAnyItems)
+        <div class="mb-8 fade-up">
+            <div class="relative overflow-hidden rounded-2xl border border-zinc-200/70 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/70 p-6 md:p-8">
+                <div class="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-accent/15 blur-3xl"></div>
+                <div class="absolute -left-10 -bottom-16 h-48 w-48 rounded-full bg-blue-400/15 blur-3xl"></div>
+
+                <div class="relative flex flex-col gap-3">
+                    <div class="text-xs font-semibold uppercase tracking-widest text-accent">
+                        {{ t('Empty home') }}
+                    </div>
+                    <h2 class="text-2xl font-black text-zinc-900 dark:text-white">
+                        {{ t('No collections or items yet') }}
+                    </h2>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300 max-w-2xl">
+                        {{ t('When new collections or template items are published, they will appear here. For now, check back soon or explore all collections.') }}
+                    </p>
+                    <div class="flex flex-wrap gap-2 pt-2">
+                        <flux:button variant="primary" href="{{ route('collection.index') }}">
+                            {{ t('Explore collections') }}
+                        </flux:button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- 3 Colunas --}}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
