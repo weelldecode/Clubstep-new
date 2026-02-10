@@ -7,6 +7,6 @@
 <link rel="icon" href="/assets/img/icone.webp" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-@vite(['resources/css/admin.css', 'resources/js/app.js'])
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
 @wireUiScripts
