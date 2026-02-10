@@ -158,11 +158,11 @@
                         :current="request()->routeIs('collection.*')" wire:navigate>
                         {{ t('Collections') }}
                     </flux:navbar.item>
-                    @foreach ($globalCategories as $tag)
-                        <flux:navbar.item :href="route('collection.tag', ['tag' => $tag->slug])"
-                            :current="request()->routeIs('collection.tag') && optional(request()->route('tag'))->slug === $tag->slug"
+                    @foreach ($globalCategories as $category)
+                        <flux:navbar.item :href="route('collection.category', ['category' => $category->slug])"
+                            :current="request()->routeIs('collection.category') && optional(request()->route('category'))->slug === $category->slug"
                             wire:navigate>
-                            {{ $tag->name }}
+                            {{ $category->name }}
                         </flux:navbar.item>
                     @endforeach
 
