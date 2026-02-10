@@ -24,6 +24,10 @@ class Plans extends Component
         return view("livewire.app.plans", [
             "plans" => $plans,
             "features" => $features,
+            "seoTitle" => t("Plans"),
+            "seoDescription" => t(
+                "Choose a plan and unlock unlimited downloads with ClubStep.",
+            ),
         ])->layout("layouts.app");
     }
 }

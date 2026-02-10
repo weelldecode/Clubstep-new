@@ -4,6 +4,7 @@ use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ItemDownloadController;
+use App\Http\Controllers\SitemapController;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
@@ -12,6 +13,37 @@ use App\Livewire\Settings\Visibility;
 use Livewire\Livewire;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use App\Http\Controllers\OrderPaymentController;
+
+Route::get("/sitemap.xml", [SitemapController::class, "index"])->name(
+    "sitemap",
+);
+Route::get("/robots.txt", function () {
+    $locales = array_keys(
+        config("laravellocalization.supportedLocales", []),
+    );
+    $paths = [
+        "/admin",
+        "/studio",
+        "/settings",
+        "/checkout",
+        "/cart",
+        "/wishlist",
+        "/billing",
+        "/downloads",
+    ];
+
+    $lines = ["User-agent: *"];
+    foreach ($paths as $path) {
+        $lines[] = "Disallow: " . $path;
+        foreach ($locales as $locale) {
+            $lines[] = "Disallow: /" . $locale . $path;
+        }
+    }
+    $lines[] = "Sitemap: " . url("/sitemap.xml");
+
+    return response(implode("\n", $lines))
+        ->header("Content-Type", "text/plain; charset=UTF-8");
+})->name("robots");
 
 Route::group(
     [

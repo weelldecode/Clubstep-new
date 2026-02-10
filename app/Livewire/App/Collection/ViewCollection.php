@@ -342,10 +342,26 @@ class ViewCollection extends Component
 
         $relatedCollections = $relatedQuery->run($collection, 4);
 
+        $authorName = $collection->relationLoaded("author")
+            ? $collection->author?->name
+            : $collection->author()->value("name");
+        $description = $collection->description
+            ?: ($authorName
+                ? t("Explore the :collection collection by :author.", [
+                    "collection" => $collection->name,
+                    "author" => $authorName,
+                ])
+                : t("Explore the :collection collection.", [
+                    "collection" => $collection->name,
+                ]));
+
         return view("livewire.app.collections.view-collection", [
             "collection" => $collection,
             "items" => $items,
             "relatedCollections" => $relatedCollections,
+            "seoTitle" => $collection->name,
+            "seoDescription" => $description,
+            "seoImage" => $collection->cover_url,
         ])
             ->title($collection->name)
             ->layout("layouts.app");

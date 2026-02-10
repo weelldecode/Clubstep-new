@@ -88,6 +88,13 @@ class Profile extends Component
             "collections" => $this->user->collections()->latest()->get(),
             "followersCount" => $this->user->followers()->count(),
             "followingCount" => $this->user->following()->count(),
+            "seoTitle" => $this->user->name,
+            "seoDescription" => t("Discover collections and creations by :name.", [
+                "name" => $this->user->name,
+            ]),
+            "seoImage" => $this->user->profile_image
+                ? asset("storage/" . $this->user->profile_image)
+                : null,
         ])
             ->title($this->user->name)
             ->layout("layouts.app");

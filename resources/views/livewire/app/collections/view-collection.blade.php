@@ -7,7 +7,26 @@
     $itemPlaceholder = asset('images/placeholders/item-default.svg');
     $filesCount = $collection->items_count ?? $collection->items->count();
     $author = $collection->user;
+    $schema = [
+        "@context" => "https://schema.org",
+        "@type" => "CreativeWork",
+        "name" => $collection->name,
+        "description" => $collection->description,
+        "image" => $collection->cover_url,
+        "url" => url()->current(),
+        "author" => $author
+            ? [
+                "@type" => "Person",
+                "name" => $author->name,
+                "url" => route("profile.user", ["user" => $author->slug]),
+            ]
+            : null,
+    ];
 @endphp
+
+@push('seo')
+<script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+@endpush
 
 <div class="relative overflow-hidden">
     <style>

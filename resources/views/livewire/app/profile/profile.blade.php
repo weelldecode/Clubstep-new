@@ -1,3 +1,23 @@
+@php
+    $profileImage = $user->profile_image
+        ? asset('storage/' . $user->profile_image)
+        : asset('images/placeholders/profile-default.svg');
+    $schema = [
+        "@context" => "https://schema.org",
+        "@type" => "ProfilePage",
+        "mainEntity" => [
+            "@type" => "Person",
+            "name" => $user->name,
+            "image" => $profileImage,
+            "url" => url()->current(),
+        ],
+    ];
+@endphp
+
+@push('seo')
+<script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+@endpush
+
 <div>
     {{-- Banner --}}
     <div id="bannerComponent" class="relative top-0 w-full h-[22rem] md:h-[24rem] shadow overflow-hidden">

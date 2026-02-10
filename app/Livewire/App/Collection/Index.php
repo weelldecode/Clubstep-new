@@ -134,15 +134,34 @@ class Index extends Component
         $collections = $browse->build($filters)->paginate(9)->withQueryString();
 
         // título dinâmico
-        $title = "Coleções";
+        $title = t("Collections");
         if ($this->tag) {
-            $title = "Tag: " . $this->tag->name;
+            $title = t("Tag") . ": " . $this->tag->name;
         }
         if ($this->category) {
-            $title = "Categoria: " . $this->category->name;
+            $title = t("Category") . ": " . $this->category->name;
         }
 
-        return view("livewire.app.collections.index", compact("collections"))
+        $description = null;
+        if ($this->tag) {
+            $description = $this->tag->description
+                ?: t("Browse collections tagged with :tag.", [
+                    "tag" => $this->tag->name,
+                ]);
+        } elseif ($this->category) {
+            $description = $this->category->description
+                ?: t("Browse collections in the :category category.", [
+                    "category" => $this->category->name,
+                ]);
+        } else {
+            $description = t("Browse all collections and find the perfect assets.");
+        }
+
+        return view("livewire.app.collections.index", [
+            "collections" => $collections,
+            "seoTitle" => $title,
+            "seoDescription" => $description,
+        ])
             ->title($title)
             ->layout("layouts.app");
     }

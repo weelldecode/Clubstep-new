@@ -43,8 +43,13 @@ class Home extends Component
 
     public function render()
     {
-        return view("livewire.app.home")
-            ->title("Pagina Inicial")
+        return view("livewire.app.home", [
+            "seoTitle" => t("Home"),
+            "seoDescription" => t(
+                "Discover curated collections, premium assets, and creative inspiration on ClubStep.",
+            ),
+        ])
+            ->title(t("Home"))
             ->layout("layouts.app");
     }
 }
