@@ -79,6 +79,21 @@
                         <flux:textarea wire:model.live="form.description" rows="4" />
                         @error('form.description') <div class="text-xs text-red-500 mt-1">{{ $message }}</div> @enderror
                     </div>
+                    <div>
+                        <flux:label>{{ t('Type') }}</flux:label>
+                        <x-select
+                            wire:model.live="form.type"
+                            placeholder="{{ t('Select the type') }}"
+                            :options="[
+                                ['id' => 'mockups', 'name' => t('Mockups')],
+                                ['id' => 'arts', 'name' => t('Arts')],
+                                ['id' => 'sites', 'name' => t('Sites')],
+                            ]"
+                            option-label="name"
+                            option-value="id"
+                        />
+                        @error('form.type') <div class="text-xs text-red-500 mt-1">{{ $message }}</div> @enderror
+                    </div>
                     <div class="grid gap-2">
                         <flux:label>{{ t('Author') }}</flux:label>
 

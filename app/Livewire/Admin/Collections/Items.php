@@ -30,8 +30,10 @@ class Items extends Component
         "slug" => "",
         "type" => "mockups",
         "price" => 0,
+        "file_url" => "",
         "image_path" => "", // string salva no banco
         "image_upload" => null, // TemporaryUploadedFile
+        "file_upload" => null, // TemporaryUploadedFile (zip)
         "images" => [], // strings
         "gallery_uploads" => [], // TemporaryUploadedFile[]
     ];
@@ -70,6 +72,8 @@ class Items extends Component
             ],
             "form.type" => ["required", Rule::in(["mockups", "arts", "sites"])],
             "form.price" => ["required", "numeric", "min:0"],
+            "form.file_url" => ["nullable", "string", "max:2048"],
+            "form.file_upload" => ["nullable", "file", "mimes:zip", "max:51200"],
             "form.image_upload" => ["nullable", "image", "max:4096"],
             "form.gallery_uploads" => ["nullable", "array"],
             "form.gallery_uploads.*" => ["image", "max:4096"],
@@ -85,10 +89,12 @@ class Items extends Component
             "slug" => "",
             "type" => "mockups",
             "price" => 0,
+            "file_url" => "",
             "image_path" => "",
             "images" => [],
 
             "image_upload" => null,
+            "file_upload" => null,
             "gallery_uploads" => [],
         ];
 
@@ -109,10 +115,12 @@ class Items extends Component
             "slug" => $item->slug,
             "type" => $item->type ?? "mockups",
             "price" => $item->price ?? 0,
+            "file_url" => $item->file_url ?? "",
             "image_path" => $item->image_path ?? "",
             "images" => $item->images ?? [],
 
             "image_upload" => null,
+            "file_upload" => null,
             "gallery_uploads" => [],
         ];
 
@@ -128,11 +136,20 @@ class Items extends Component
             "slug" => $this->form["slug"],
             "type" => $this->form["type"],
             "price" => $this->form["price"],
+            "file_url" => $this->form["file_url"] ?? "",
             "image_path" => $this->form["image_path"] ?? "", // string existente
             "images" => is_array($this->form["images"] ?? null)
                 ? $this->form["images"]
                 : [],
         ];
+
+        // ✅ arquivo zip (novo upload)
+        if (!empty($this->form["file_upload"])) {
+            $payload["file_url"] = $this->form["file_upload"]->store(
+                "items/files",
+                "public",
+            );
+        }
 
         // ✅ capa (novo upload)
         if (!empty($this->form["image_upload"])) {
@@ -164,6 +181,7 @@ class Items extends Component
 
         // ✅ limpar temporários (senão fica “preso” no state)
         $this->form["image_upload"] = null;
+        $this->form["file_upload"] = null;
         $this->form["gallery_uploads"] = [];
 
         $this->showModal = false;

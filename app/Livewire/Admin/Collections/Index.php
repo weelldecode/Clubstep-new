@@ -32,6 +32,7 @@ class Index extends Component
         "name" => "",
         "slug" => "",
         "description" => "",
+        "type" => "mockups",
         "visibility" => "public",
         "status" => "draft",
         "category_ids" => [],
@@ -67,6 +68,7 @@ class Index extends Component
                 Rule::unique("collections", "slug")->ignore($this->editingId),
             ],
             "form.description" => ["nullable", "string", "max:2000"],
+            "form.type" => ["required", Rule::in(["mockups", "arts", "sites"])],
             "form.visibility" => [
                 "required",
                 Rule::in(array_column(CollectionVisibility::cases(), "value")),
@@ -116,6 +118,7 @@ class Index extends Component
             "name" => "",
             "slug" => "",
             "description" => "",
+            "type" => "mockups",
             "user_id" => null,
             "visibility" => CollectionVisibility::Public->value,
             "status" => CollectionStatus::Draft->value,
@@ -138,6 +141,7 @@ class Index extends Component
             "name" => $c->name,
             "slug" => $c->slug,
             "description" => $c->description ?? "",
+            "type" => $c->type ?? "mockups",
             "user_id" => $c->user_id,
             "visibility" =>
                 $c->visibility instanceof \BackedEnum
@@ -189,6 +193,7 @@ class Index extends Component
             "name" => $this->form["name"],
             "slug" => $this->form["slug"],
             "description" => $this->form["description"] ?? null,
+            "type" => $this->form["type"],
             "user_id" => $this->form["user_id"] ?? null,
             "visibility" => $this->form["visibility"],
             "status" => $this->form["status"],
