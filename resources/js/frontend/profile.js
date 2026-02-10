@@ -2,6 +2,7 @@ const bannerInput = document.getElementById("bannerInput");
 const bannerCanvas = document.getElementById("bannerCanvas");
 const gridOverlay = document.getElementById("gridOverlay");
 const bannerDisplay = document.getElementById("bannerDisplay");
+const profileAvatarImage = document.getElementById("profileAvatarImage");
 const saveBtn = document.getElementById("saveBannerBtn");
 const resetBtn = document.getElementById("resetBannerBtn");
 const ctx = bannerCanvas.getContext("2d");
@@ -99,12 +100,45 @@ function drawGridOverlay() {
     }
 }
 
+function uploadBannerFile(file) {
+    const wireId = document
+        .getElementById("bannerComponent")
+        .closest("[wire\\:id]")
+        .getAttribute("wire:id");
+
+    const component = Livewire.find(wireId);
+
+    component.upload(
+        "bannerTemp",
+        file,
+        () => {
+            console.log("✅ Upload concluído");
+            bannerCanvas.classList.add("hidden");
+            gridOverlay.classList.add("hidden");
+            saveBtn.classList.add("hidden");
+            resetBtn.classList.add("hidden");
+            bannerDisplay.classList.remove("hidden");
+        },
+        (error) => console.error("❌ Erro:", error),
+    );
+}
+
 // --------------------
 // Carregar nova imagem (reset automático)
 // --------------------
 bannerInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (file.type === "image/gif") {
+        bannerCanvas.classList.add("hidden");
+        gridOverlay.classList.add("hidden");
+        saveBtn.classList.add("hidden");
+        resetBtn.classList.add("hidden");
+        bannerDisplay.src = URL.createObjectURL(file);
+        uploadBannerFile(file);
+        return;
+    }
 
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -178,29 +212,56 @@ bannerCanvas.addEventListener("mouseleave", () => {
 saveBtn.addEventListener("click", () => {
     if (!bannerImg) return;
 
-    bannerCanvas.toBlob((blob) => {
-        const file = new File([blob], "banner.jpg", { type: "image/jpeg" });
+    const exportScale = 2;
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = bannerCanvas.width * exportScale;
+    exportCanvas.height = bannerCanvas.height * exportScale;
+    const exportCtx = exportCanvas.getContext("2d");
 
-        // pega o wire:id que o Livewire colocou automaticamente
-        const wireId = document
-            .getElementById("bannerComponent")
-            .closest("[wire\\:id]")
-            .getAttribute("wire:id");
+    exportCtx.imageSmoothingEnabled = true;
+    exportCtx.imageSmoothingQuality = "high";
 
-        const component = Livewire.find(wireId);
+    const scale = Math.max(
+        bannerCanvas.width / bannerImg.width,
+        bannerCanvas.height / bannerImg.height,
+    );
+    const imgWidth = bannerImg.width * scale;
+    const imgHeight = bannerImg.height * scale;
+    const x = bannerPos.x ?? (bannerCanvas.width - imgWidth) / 2;
+    const y = bannerPos.y ?? (bannerCanvas.height - imgHeight) / 2;
 
-        component.upload(
-            "bannerTemp",
-            file,
-            () => {
-                console.log("✅ Upload concluído");
-                bannerCanvas.classList.add("hidden");
-                gridOverlay.classList.add("hidden");
-                saveBtn.classList.add("hidden");
-                bannerDisplay.classList.remove("hidden");
-                bannerDisplay.src = URL.createObjectURL(file);
-            },
-            (error) => console.error("❌ Erro:", error),
-        );
-    });
+    exportCtx.drawImage(
+        bannerImg,
+        x * exportScale,
+        y * exportScale,
+        imgWidth * exportScale,
+        imgHeight * exportScale,
+    );
+
+    exportCanvas.toBlob((blob) => {
+        const file = new File([blob], "banner.webp", { type: "image/webp" });
+
+        uploadBannerFile(file);
+        bannerDisplay.src = URL.createObjectURL(file);
+    }, "image/webp", 0.92);
 });
+
+if (window.Livewire) {
+    Livewire.on("profile-media-updated", ({ banner, avatar, ts }) => {
+        if (bannerDisplay && banner) {
+            const sep = banner.includes("?") ? "&" : "?";
+            bannerDisplay.src = `${banner}${sep}v=${ts}`;
+            bannerDisplay.classList.remove("hidden");
+        }
+        if (profileAvatarImage && avatar) {
+            const sep = avatar.includes("?") ? "&" : "?";
+            profileAvatarImage.src = `${avatar}${sep}v=${ts}`;
+        }
+        if (bannerDisplay && banner) {
+            bannerDisplay.style.opacity = "1";
+        }
+        if (profileAvatarImage && avatar) {
+            profileAvatarImage.style.opacity = "1";
+        }
+    });
+}

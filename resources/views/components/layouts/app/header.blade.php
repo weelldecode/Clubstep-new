@@ -13,13 +13,13 @@
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
         <div class="w-full">
-            <div class="h-20 px-6 md:px-10 flex items-center justify-between w-full gap-8">
-                <div class="w-full flex items-center justify-between gap-6">
+            <div class="h-20 px-4 sm:px-6 md:px-10 flex items-center justify-between w-full gap-4 sm:gap-6 md:gap-8">
+                <div class="w-full flex items-center justify-between gap-4 sm:gap-6 md:gap-8">
                     <div
                         x-data="{ loading: false }"
                         x-on:livewire:navigating.window="loading = true"
                         x-on:livewire:navigated.window="loading = false"
-                        class="m-auto md:m-0"
+                        class="m-auto sm:m-0"
                     >
                         <a href="{{ route('home') }}"
                            wire:navigate
@@ -42,7 +42,7 @@
                                 </span>
 
                                 {{-- Club --}}
-                                <span class="hidden md:inline text-2xl md:text-4xl font-black tracking-tight
+                                <span class="hidden sm:inline text-2xl md:text-4xl font-black tracking-tight
                                              text-zinc-700 dark:text-zinc-200 transition-colors duration-300
                                              group-hover:text-zinc-900 dark:group-hover:text-white">
                                     Club
@@ -50,7 +50,7 @@
 
                                 {{-- Step --}}
                                 <span class="relative font-black tracking-tight text-accent
-                                             text-3xl md:text-4xl
+                                             text-3xl sm:text-3xl md:text-4xl
                                              transition-all duration-300
                                              group-hover:tracking-wide group-hover:scale-[1.03]">
                                     Step
@@ -59,7 +59,7 @@
                             </div>
 
                             {{-- Subtítulo --}}
-                            <span class="mt-0.5 text-[11px] md:text-xs
+                            <span class="mt-0.5 hidden sm:block text-[11px] md:text-xs
                                          text-zinc-500 dark:text-zinc-400 tracking-wide">
                                 {{ t('Sites • Collections • Arts') }}
                             </span>
@@ -70,7 +70,7 @@
                         <livewire:components.search-collections />
                     </div>
 
-                    <div>
+                    <div class="hidden md:block">
                         <div class="flex items-center gap-2">
                             <flux:navbar class="me-1.5 space-x-0.5 rtl:space-x-reverse py-0!">
                                 @if (!auth()->user())
@@ -145,6 +145,29 @@
                             @endauth
                         </div>
                     </div>
+                    <div class="md:hidden">
+                        <div class="flex items-center gap-2">
+                            @auth
+                                <flux:modal.trigger name="cart-drawer">
+                                    <flux:button variant="outline" class="px-3">
+                                        <flux:icon name="shopping-bag" variant="mini" />
+                                    </flux:button>
+                                </flux:modal.trigger>
+                                <a href="{{ route('wishlist.index') }}"
+                                   class="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200/70 bg-white/70 text-zinc-700 transition dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                   title="{{ t('Wishlist') }}">
+                                    <flux:icon name="heart" class="size-4" variant="solid" />
+                                    <span class="absolute -top-1.5 -right-1.5">
+                                        <livewire:components.wishlist-badge />
+                                    </span>
+                                </a>
+                            @else
+                                <flux:button href="{{ route('login') }}" variant="outline" class="px-3">
+                                    {{ t('Sign In') }}
+                                </flux:button>
+                            @endauth
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -197,10 +220,60 @@
                     wire:navigate>
                     {{ t('Home') }}
                 </flux:navlist.item>
+                <flux:navlist.item icon="folder-open" :href="route('collection.index')"
+                    :current="request()->routeIs('collection.*')" wire:navigate>
+                    {{ t('Collections') }}
+                </flux:navlist.item>
+                @foreach ($globalCategories as $category)
+                    <flux:navlist.item icon="tag" :href="route('collection.category', ['category' => $category->slug])"
+                        :current="request()->routeIs('collection.category') && optional(request()->route('category'))->slug === $category->slug"
+                        wire:navigate>
+                        {{ $category->name }}
+                    </flux:navlist.item>
+                @endforeach
                 @auth
                     <flux:navlist.item icon="shopping-bag" :href="route('cart.index')" :current="request()->routeIs('cart.index')"
                         wire:navigate>
                         {{ t('Cart') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="heart" :href="route('wishlist.index')" :current="request()->routeIs('wishlist.index')"
+                        wire:navigate>
+                        {{ t('Wishlist') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="user" :href="route('profile.user', auth()->user()->slug)" :current="request()->routeIs('profile.user')"
+                        wire:navigate>
+                        {{ t('My Account') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="cog-6-tooth" :href="route('settings.profile')" :current="request()->routeIs('settings.*')"
+                        wire:navigate>
+                        {{ t('Settings') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="arrow-down-tray" :href="route('download')" :current="request()->routeIs('download')"
+                        wire:navigate>
+                        {{ t('Downloads') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="credit-card" :href="route('billing')" :current="request()->routeIs('billing')"
+                        wire:navigate>
+                        {{ t('Subscription') }}
+                    </flux:navlist.item>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <flux:navlist.item as="button" type="submit" icon="arrow-right-start-on-rectangle">
+                            {{ t('Log Out') }}
+                        </flux:navlist.item>
+                    </form>
+                @else
+                    <flux:navlist.item icon="arrow-right-circle" :href="route('login')"
+                        :current="request()->routeIs('login')" wire:navigate>
+                        {{ t('Sign In') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="user-plus" :href="route('register')"
+                        :current="request()->routeIs('register')" wire:navigate>
+                        {{ t('Create Account') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item icon="sparkles" :href="route('plans')"
+                        :current="request()->routeIs('plans')" wire:navigate>
+                        {{ t('Get Unlimited Downloads') }}
                     </flux:navlist.item>
                 @endauth
             </flux:navlist.group>

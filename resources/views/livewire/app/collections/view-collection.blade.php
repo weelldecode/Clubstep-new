@@ -7,6 +7,25 @@
     $itemPlaceholder = asset('images/placeholders/item-default.svg');
     $filesCount = $collection->items_count ?? $collection->items->count();
     $author = $collection->user;
+    $authorAnimationsAllowed = $author
+        ? ($author->type === 'verified' && ($author->profile_animations_enabled ?? true))
+        : false;
+    $authorRingStyle = $author?->profileRingStyle;
+    $authorAvatarUrl = null;
+    if ($author && $author->profile_image) {
+        $authorAvatarUrl = asset('storage/' . $author->profile_image);
+        if (
+            !$authorAnimationsAllowed &&
+            str_ends_with(strtolower($author->profile_image), '.gif')
+        ) {
+            $staticPath = preg_replace('/\\.gif$/i', '.png', $author->profile_image);
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($staticPath)) {
+                $authorAvatarUrl = asset('storage/' . $staticPath);
+            } else {
+                $authorAvatarUrl = null;
+            }
+        }
+    }
     $schema = [
         "@context" => "https://schema.org",
         "@type" => "CreativeWork",
@@ -27,6 +46,42 @@
 @push('seo')
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
+
+<style>
+    @keyframes profileRingSpinSm {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .profile-ring-sm {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        isolation: isolate;
+    }
+    .profile-ring-sm::before {
+        content: "";
+        position: absolute;
+        inset: -4px;
+        border-radius: 9999px;
+        background: var(--ring-gradient);
+        animation: profileRingSpinSm var(--ring-speed) linear infinite;
+        filter: blur(1px);
+        opacity: 0.9;
+        z-index: 0;
+        pointer-events: none;
+    }
+    .profile-ring-sm::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: 9999px;
+        border: 2px solid var(--ring-border);
+        opacity: 0.7;
+        z-index: 0;
+        pointer-events: none;
+    }
+</style>
 
 <div class="relative overflow-hidden">
     <style>
@@ -178,8 +233,21 @@
                         <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-5 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
                             @if ($author)
                                 <div class="flex items-center gap-4">
-                                    @if ($author->profile_image)
-                                        <flux:avatar size="lg" src="{{ asset('storage/' . $author->profile_image) }}" />
+                                    @if ($authorAvatarUrl)
+                                        <div
+                                            class="{{ $authorAnimationsAllowed ? 'profile-ring-sm' : '' }}"
+                                            @if ($authorAnimationsAllowed)
+                                                style="
+                                                    --ring-gradient: {{ $authorRingStyle?->gradient ?? 'conic-gradient(from 120deg, #22d3ee, #6366f1, #f97316, #22d3ee)' }};
+                                                    --ring-border: {{ $authorRingStyle?->border ?? 'rgba(255,255,255,0.25)' }};
+                                                    --ring-speed: {{ $authorRingStyle?->speed ?? '8s' }};
+                                                "
+                                            @endif
+                                        >
+                                            <img src="{{ $authorAvatarUrl }}"
+                                                 class="relative z-10 w-11 h-11 rounded-full object-cover"
+                                                 alt="{{ $author->name }}">
+                                        </div>
                                     @else
                                         <div class="w-11 h-11 rounded-full bg-zinc-300 flex items-center justify-center text-sm font-bold text-white">
                                             {{ $author->initials() }}

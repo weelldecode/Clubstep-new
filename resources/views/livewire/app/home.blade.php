@@ -229,6 +229,41 @@
             <div class="lg:sticky lg:top-36 space-y-4">
                 {{-- Autores em destaque --}}
                 <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
+                    <style>
+                        @keyframes profileRingSpinSm {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                        .profile-ring-sm {
+                            position: relative;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            isolation: isolate;
+                        }
+                        .profile-ring-sm::before {
+                            content: "";
+                            position: absolute;
+                            inset: -4px;
+                            border-radius: 9999px;
+                            background: var(--ring-gradient);
+                            animation: profileRingSpinSm var(--ring-speed) linear infinite;
+                            filter: blur(1px);
+                            opacity: 0.9;
+                            z-index: 0;
+                            pointer-events: none;
+                        }
+                        .profile-ring-sm::after {
+                            content: "";
+                            position: absolute;
+                            inset: -1px;
+                            border-radius: 9999px;
+                            border: 2px solid var(--ring-border);
+                            opacity: 0.7;
+                            z-index: 0;
+                            pointer-events: none;
+                        }
+                    </style>
                     <div class="flex items-center justify-between">
                         <p class="font-semibold text-zinc-900 dark:text-white">{{ t('Featured Creators') }}</p>
                     </div>
@@ -237,11 +272,41 @@
                         @foreach ($featuredArtists as $user)
                             <a href="/profile/{{ $user->slug }}"
                                class="group text-center">
-                                @php $avatar = $user->avatar(); @endphp
+                                @php
+                                    $avatar = $user->avatar();
+                                    $animationsAllowed =
+                                        $user->type === 'verified' &&
+                                        ($user->profile_animations_enabled ?? true);
+                                    $ringStyle = $user->profileRingStyle;
+                                    $avatarUrl = $avatar['type'] === 'image' ? $avatar['value'] : null;
+                                    if (
+                                        !$animationsAllowed &&
+                                        $user->profile_image &&
+                                        str_ends_with(strtolower($user->profile_image), '.gif')
+                                    ) {
+                                        $staticPath = preg_replace('/\\.gif$/i', '.png', $user->profile_image);
+                                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($staticPath)) {
+                                            $avatarUrl = asset('storage/' . $staticPath);
+                                        } else {
+                                            $avatarUrl = null;
+                                        }
+                                    }
+                                @endphp
 
-                                @if ($avatar['type'] === 'image')
-                                    <img src="{{ $avatar['value'] }}" alt="{{ $user->name }}"
-                                         class="mx-auto h-14 w-14 rounded-full object-cover ring-2 ring-transparent group-hover:ring-accent/60 transition">
+                                @if ($avatarUrl)
+                                    <div
+                                        class="mx-auto {{ $animationsAllowed ? 'profile-ring-sm' : '' }}"
+                                        @if ($animationsAllowed)
+                                            style="
+                                                --ring-gradient: {{ $ringStyle?->gradient ?? 'conic-gradient(from 120deg, #22d3ee, #6366f1, #f97316, #22d3ee)' }};
+                                                --ring-border: {{ $ringStyle?->border ?? 'rgba(255,255,255,0.25)' }};
+                                                --ring-speed: {{ $ringStyle?->speed ?? '8s' }};
+                                            "
+                                        @endif
+                                    >
+                                        <img src="{{ $avatarUrl }}" alt="{{ $user->name }}"
+                                             class="relative z-10 h-14 w-14 rounded-full object-cover ring-2 ring-transparent group-hover:ring-accent/60 transition">
+                                    </div>
                                 @else
                                     <div class="mx-auto h-14 w-14 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center font-bold text-zinc-700 dark:text-zinc-200">
                                         {{ $avatar['value'] }}

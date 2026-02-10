@@ -72,6 +72,82 @@
                 @endif
             </div>
 
+            @if (auth()->user()->type === 'verified')
+                <div class="rounded-2xl border border-zinc-200/70 bg-white/80 p-5 shadow-[0_20px_50px_-45px_rgba(0,0,0,0.45)] backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/75">
+                    <flux:heading>{{ t('Animated Profile') }}</flux:heading>
+                    <flux:subheading class="mt-1">{{ t('Enable or disable GIFs and animated effects.') }}</flux:subheading>
+
+                    <style>
+                        @keyframes ringPreviewSpin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                        .ring-preview {
+                            position: relative;
+                            width: 52px;
+                            height: 52px;
+                            border-radius: 9999px;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        .ring-preview::before {
+                            content: "";
+                            position: absolute;
+                            inset: -6px;
+                            border-radius: 9999px;
+                            background: var(--ring-gradient);
+                            animation: ringPreviewSpin var(--ring-speed) linear infinite;
+                            filter: blur(1.5px);
+                            opacity: 0.9;
+                        }
+                        .ring-preview::after {
+                            content: "";
+                            position: absolute;
+                            inset: -2px;
+                            border-radius: 9999px;
+                            border: 2px solid var(--ring-border);
+                            opacity: 0.7;
+                        }
+                    </style>
+
+                    <div class="mt-4 rounded-xl border border-zinc-200/70 bg-zinc-50/70 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
+                        <flux:switch wire:model.live="profileAnimationsEnabled"
+                                     label="{{ t('Enable animations') }}"
+                                     description="{{ t('Allow GIF avatars/banners and the animated ring around your profile picture.') }}" />
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-zinc-200/70 bg-zinc-50/70 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
+                        <flux:label>{{ t('Ring style') }}</flux:label>
+                        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <button type="button"
+                                wire:click="$set('profileRingStyleId', null)"
+                                class="flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition
+                                    {{ $profileRingStyleId ? 'border-zinc-200/70 bg-white/70 dark:border-zinc-700 dark:bg-zinc-900/70' : 'border-accent/50 bg-accent/10 ring-1 ring-accent/30' }}">
+                                <span class="ring-preview"
+                                    style="--ring-gradient: conic-gradient(from 120deg, #22d3ee, #6366f1, #f97316, #22d3ee); --ring-border: rgba(255,255,255,0.25); --ring-speed: 8s;">
+                                </span>
+                                <span class="text-sm font-semibold">{{ t('Default') }}</span>
+                            </button>
+                            @foreach ($profileRingStyles as $style)
+                                <button type="button"
+                                    wire:click="$set('profileRingStyleId', {{ $style->id }})"
+                                    class="flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition
+                                        {{ (int) $profileRingStyleId === (int) $style->id ? 'border-accent/50 bg-accent/10 ring-1 ring-accent/30' : 'border-zinc-200/70 bg-white/70 dark:border-zinc-700 dark:bg-zinc-900/70' }}">
+                                    <span class="ring-preview"
+                                        style="--ring-gradient: {{ $style->gradient }}; --ring-border: {{ $style->border }}; --ring-speed: {{ $style->speed }};">
+                                    </span>
+                                    <span class="text-sm font-semibold">{{ $style->name }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            {{ t('Choose the animated ring style for your avatar.') }}
+                        </p>
+                    </div>
+                </div>
+            @endif
+
             <div class="flex items-center gap-4">
                 <flux:button variant="primary" type="submit">{{ t('Save') }}</flux:button>
                 <x-action-message class="me-3" on="profile-updated">

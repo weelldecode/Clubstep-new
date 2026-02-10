@@ -2,6 +2,26 @@
     $profileImage = $user->profile_image
         ? asset('storage/' . $user->profile_image)
         : asset('images/placeholders/profile-default.svg');
+    $animationsAllowed = $user->type === 'verified' && ($user->profile_animations_enabled ?? true);
+    $showProfileRing = $animationsAllowed;
+    $ringStyle = $user->profileRingStyle;
+    $avatarPath = $user->profile_image;
+    $avatarUrl = $avatarPath ? asset('storage/' . $avatarPath) : null;
+    $avatarCachePath = $avatarPath;
+    if (!$animationsAllowed && $avatarPath && str_ends_with(strtolower($avatarPath), '.gif')) {
+        $staticAvatarPath = preg_replace('/\\.gif$/i', '.png', $avatarPath);
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($staticAvatarPath)) {
+            $avatarUrl = asset('storage/' . $staticAvatarPath);
+            $avatarCachePath = $staticAvatarPath;
+        } else {
+            $avatarUrl = asset('images/placeholders/profile-default.svg');
+            $avatarCachePath = null;
+        }
+    }
+    $avatarVersion = $avatarCachePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($avatarCachePath)
+        ? \Illuminate\Support\Facades\Storage::disk('public')->lastModified($avatarCachePath)
+        : time();
+    $avatarSrc = $avatarUrl ? $avatarUrl . '?v=' . $avatarVersion : null;
     $schema = [
         "@context" => "https://schema.org",
         "@type" => "ProfilePage",
@@ -18,13 +38,68 @@
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
 
+@if ($showProfileRing)
+    <style>
+        @keyframes profileRingSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes profileRingPulse {
+            0%, 100% { opacity: 0.65; }
+            50% { opacity: 1; }
+        }
+        .profile-ring::before {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border-radius: 9999px;
+            background: var(--ring-gradient);
+            animation: profileRingSpin var(--ring-speed) linear infinite;
+            filter: blur(1.5px);
+            box-shadow: 0 0 18px var(--ring-glow);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .profile-ring::after {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: 9999px;
+            border: 2px solid var(--ring-border);
+            animation: profileRingPulse 2.4s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .profile-ring {
+            isolation: isolate;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+@endif
+
+@php
+    $bannerPath = $user->profile_banner;
+    $bannerUrl = $user->bannerUrl()
+        ?? 'https://mangadex.org/img/group-banner.png';
+    $bannerCachePath = $bannerPath;
+    if (!$animationsAllowed && $bannerPath && str_ends_with(strtolower($bannerPath), '.gif')) {
+        $bannerCachePath = preg_replace('/\\.gif$/i', '.png', $bannerPath);
+    }
+    $bannerVersion = $bannerCachePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($bannerCachePath)
+        ? \Illuminate\Support\Facades\Storage::disk('public')->lastModified($bannerCachePath)
+        : time();
+    $bannerSrc = $bannerUrl . '?v=' . $bannerVersion;
+@endphp
+
 <div>
     {{-- Banner --}}
     <div id="bannerComponent" class="relative top-0 w-full h-[22rem] md:h-[24rem] shadow overflow-hidden">
 
         {{-- Banner atual --}}
-        <img id="bannerDisplay"
-            src="{{ $user->profile_banner ? asset('storage/' . $user->profile_banner) : 'https://mangadex.org/img/group-banner.png' }}"
+        <img id="bannerDisplay" wire:ignore
+            src="{{ $bannerSrc }}"
             class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
@@ -82,9 +157,20 @@
                         $avatar = $user->avatar();
                     @endphp
                     <div
-                        class="relative w-44 h-44 md:w-52 md:h-52 border-8 border-zinc-50 dark:border-zinc-800 rounded-full overflow-hidden shadow-[0_20px_60px_-35px_rgba(0,0,0,0.6)]">
+                        class="relative {{ $showProfileRing ? 'profile-ring w-44 h-44 md:w-52 md:h-52' : '' }}"
+                        @if ($showProfileRing)
+                            style="
+                                --ring-gradient: {{ $ringStyle?->gradient ?? 'conic-gradient(from 120deg, #22d3ee, #6366f1, #f97316, #22d3ee)' }};
+                                --ring-border: {{ $ringStyle?->border ?? 'rgba(255,255,255,0.25)' }};
+                                --ring-speed: {{ $ringStyle?->speed ?? '8s' }};
+                                --ring-glow: rgba(56, 189, 248, 0.35);
+                            "
+                        @endif
+                    >
+                        <div
+                            class="relative z-10 w-44 h-44 md:w-52 md:h-52 border-8 border-zinc-50 dark:border-zinc-800 rounded-full overflow-hidden shadow-[0_20px_60px_-35px_rgba(0,0,0,0.6)]">
                         @if ($avatar['type'] === 'image')
-                            <img src="{{ $avatar['value'] }}"
+                            <img id="profileAvatarImage" wire:ignore src="{{ $avatarSrc ?? $avatar['value'] }}"
                                 class="w-full h-full rounded-full object-cover" alt="{{ t('Avatar') }}">
                         @else
                             <div class="w-full h-full rounded-full bg-zinc-300 dark:bg-zinc-700 text-white flex items-center justify-center text-4xl font-black tracking-wide">
@@ -104,6 +190,7 @@
                                 </label>
                             @endif
                         @endauth
+                        </div>
                     </div>
 
                     {{-- Follow / Unfollow --}}

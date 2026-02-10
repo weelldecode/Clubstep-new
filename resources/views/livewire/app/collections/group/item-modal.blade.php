@@ -207,18 +207,85 @@
                         @endif
                     @endauth
 
-                    @if ($author)
-                        <div class="mt-1 flex items-center gap-3 rounded-xl border border-zinc-200/70 bg-white/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
-                            @if ($author->profile_image)
-                                <flux:avatar size="lg" src="{{ asset('storage/' . $author->profile_image) }}" />
-                            @else
-                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-300 text-sm font-bold text-white">
-                                    {{ $author->initials() }}
-                                </div>
-                            @endif
-                            <div>
-                                <flux:heading size="lg">{{ $author->name }}</flux:heading>
-                                @if ($author->type === 'verified')
+@if ($author)
+    @php
+        $authorAnimationsAllowed = $author->type === 'verified' && ($author->profile_animations_enabled ?? true);
+        $authorRingStyle = $author->profileRingStyle;
+        $authorAvatarUrl = null;
+        if ($author->profile_image) {
+            $authorAvatarUrl = asset('storage/' . $author->profile_image);
+            if (
+                !$authorAnimationsAllowed &&
+                str_ends_with(strtolower($author->profile_image), '.gif')
+            ) {
+                $staticPath = preg_replace('/\\.gif$/i', '.png', $author->profile_image);
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($staticPath)) {
+                    $authorAvatarUrl = asset('storage/' . $staticPath);
+                } else {
+                    $authorAvatarUrl = null;
+                }
+            }
+        }
+    @endphp
+    <style>
+        @keyframes profileRingSpinSm {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .profile-ring-sm {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            isolation: isolate;
+        }
+        .profile-ring-sm::before {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            background: var(--ring-gradient);
+            animation: profileRingSpinSm var(--ring-speed) linear infinite;
+            filter: blur(1px);
+            opacity: 0.9;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .profile-ring-sm::after {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: 9999px;
+            border: 2px solid var(--ring-border);
+            opacity: 0.7;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+    <div class="mt-1 flex items-center gap-3 rounded-xl border border-zinc-200/70 bg-white/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+        @if ($authorAvatarUrl)
+            <div
+                class="{{ $authorAnimationsAllowed ? 'profile-ring-sm' : '' }}"
+                @if ($authorAnimationsAllowed)
+                    style="
+                        --ring-gradient: {{ $authorRingStyle?->gradient ?? 'conic-gradient(from 120deg, #22d3ee, #6366f1, #f97316, #22d3ee)' }};
+                        --ring-border: {{ $authorRingStyle?->border ?? 'rgba(255,255,255,0.25)' }};
+                        --ring-speed: {{ $authorRingStyle?->speed ?? '8s' }};
+                    "
+                @endif
+            >
+                <img src="{{ $authorAvatarUrl }}"
+                     class="relative z-10 h-10 w-10 rounded-full object-cover"
+                     alt="{{ $author->name }}">
+            </div>
+        @else
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-300 text-sm font-bold text-white">
+                {{ $author->initials() }}
+            </div>
+        @endif
+        <div>
+            <flux:heading size="lg">{{ $author->name }}</flux:heading>
+            @if ($author->type === 'verified')
                                     <flux:text class="flex items-center gap-1 text-xs">
                                         Verificado
                                         <flux:icon.badge-check class="size-4" />

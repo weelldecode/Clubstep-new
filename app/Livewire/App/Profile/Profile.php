@@ -4,6 +4,7 @@ namespace App\Livewire\App\Profile;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -23,6 +24,65 @@ class Profile extends Component
         "avatarTemp" => "image|max:2048", // até 2MB
     ];
 
+    private function isGif($file): bool
+    {
+        $mime = $file?->getMimeType();
+        return $mime && str_contains($mime, "gif");
+    }
+
+    private function canUseAnimations(): bool
+    {
+        return $this->user->type === "verified" &&
+            ($this->user->profile_animations_enabled ?? true);
+    }
+
+    private function staticPngPath(string $path): string
+    {
+        return preg_replace("/\\.gif$/i", ".png", $path);
+    }
+
+    private function deleteProfileAsset(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        if (Storage::disk("public")->exists($path)) {
+            Storage::disk("public")->delete($path);
+        }
+
+        if (preg_match("/\\.gif$/i", $path)) {
+            $staticPath = $this->staticPngPath($path);
+            if (Storage::disk("public")->exists($staticPath)) {
+                Storage::disk("public")->delete($staticPath);
+            }
+        }
+    }
+
+    private function createStaticFromGif(string $path): void
+    {
+        if (!preg_match("/\\.gif$/i", $path)) {
+            return;
+        }
+
+        if (!function_exists("imagecreatefromgif")) {
+            return;
+        }
+
+        $fullPath = Storage::disk("public")->path($path);
+        $image = @imagecreatefromgif($fullPath);
+        if (!$image) {
+            return;
+        }
+
+        $staticPath = Storage::disk("public")->path(
+            $this->staticPngPath($path),
+        );
+
+        imagepng($image, $staticPath, 6);
+        imagedestroy($image);
+    }
+
     public function mount(User $user)
     {
         $this->user = $user;
@@ -32,10 +92,28 @@ class Profile extends Component
     public function updatedBannerTemp()
     {
         $this->validate(["bannerTemp" => "image|max:5120"]);
+        if ($this->isGif($this->bannerTemp) && !$this->canUseAnimations()) {
+            $this->addError(
+                "bannerTemp",
+                t("Animated banners are available for verified profiles only."),
+            );
+            $this->bannerTemp = null;
+            return;
+        }
+        $this->deleteProfileAsset($this->user->profile_banner);
         $path = $this->bannerTemp->store("banners", "public");
         $this->user->profile_banner = $path;
         $this->user->save();
+        if ($this->isGif($this->bannerTemp) && $this->canUseAnimations()) {
+            $this->createStaticFromGif($path);
+        }
         $this->bannerTemp = null;
+        $this->dispatch(
+            "profile-media-updated",
+            banner: $this->user->bannerUrl(),
+            avatar: $this->user->avatar()["value"] ?? null,
+            ts: now()->timestamp,
+        );
         $this->dispatch(
             "notify",
             message: "Banner alterado com sucesso!",
@@ -46,10 +124,28 @@ class Profile extends Component
     public function updatedAvatarTemp()
     {
         $this->validate(["avatarTemp" => "image|max:2048"]);
+        if ($this->isGif($this->avatarTemp) && !$this->canUseAnimations()) {
+            $this->addError(
+                "avatarTemp",
+                t("Animated avatars are available for verified profiles only."),
+            );
+            $this->avatarTemp = null;
+            return;
+        }
+        $this->deleteProfileAsset($this->user->profile_image);
         $path = $this->avatarTemp->store("avatars", "public");
         $this->user->profile_image = $path;
         $this->user->save();
+        if ($this->isGif($this->avatarTemp) && $this->canUseAnimations()) {
+            $this->createStaticFromGif($path);
+        }
         $this->avatarTemp = null;
+        $this->dispatch(
+            "profile-media-updated",
+            banner: $this->user->bannerUrl(),
+            avatar: $this->user->avatar()["value"] ?? null,
+            ts: now()->timestamp,
+        );
         $this->dispatch(
             "notify",
             message: "Avatar alterado com sucesso!",

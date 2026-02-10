@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\ProfileRingStyle;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -29,6 +31,8 @@ class User extends Authenticatable implements MustVerifyEmail
         "pin",
         "profile_banner",
         "profile_image",
+        "profile_animations_enabled",
+        "profile_ring_style_id",
         "is_private",
         "hide_collections",
         "hide_followers",
@@ -53,15 +57,29 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             "email_verified_at" => "datetime",
             "pin" => "hashed",
+            "profile_animations_enabled" => "boolean",
         ];
     }
 
     public function avatar(): array
     {
         if ($this->profile_image) {
+            $path = $this->profile_image;
+            $animationsAllowed =
+                $this->type === "verified" &&
+                ($this->profile_animations_enabled ?? true);
+            if (
+                !$animationsAllowed &&
+                str_ends_with(strtolower($path), ".gif")
+            ) {
+                $staticPath = preg_replace("/\\.gif$/i", ".png", $path);
+                if (Storage::disk("public")->exists($staticPath)) {
+                    $path = $staticPath;
+                }
+            }
             return [
                 "type" => "image",
-                "value" => asset("storage/" . $this->profile_image),
+                "value" => asset("storage/" . $path),
             ];
         }
 
@@ -73,6 +91,35 @@ class User extends Authenticatable implements MustVerifyEmail
                 ->map(fn($word) => Str::substr($word, 0, 1))
                 ->implode(""),
         ];
+    }
+
+    public function bannerUrl(): ?string
+    {
+        if (!$this->profile_banner) {
+            return null;
+        }
+
+        $path = $this->profile_banner;
+        $animationsAllowed =
+            $this->type === "verified" &&
+            ($this->profile_animations_enabled ?? true);
+
+        if (
+            !$animationsAllowed &&
+            str_ends_with(strtolower($path), ".gif")
+        ) {
+            $staticPath = preg_replace("/\\.gif$/i", ".png", $path);
+            if (Storage::disk("public")->exists($staticPath)) {
+                $path = $staticPath;
+            }
+        }
+
+        return asset("storage/" . $path);
+    }
+
+    public function profileRingStyle()
+    {
+        return $this->belongsTo(ProfileRingStyle::class);
     }
 
     /**
