@@ -49,6 +49,7 @@
                     $collection = $download->collection;
                     $status = strtolower((string) $download->status);
                     $isReady = $status === "ready" && !empty($download->file_path);
+                    $isExternal = $isReady && \Illuminate\Support\Str::startsWith((string) $download->file_path, ["http://", "https://"]);
                     $statusLabel = t($status ? ucfirst($status) : "Unknown");
 
                     if ($status === "ready") {
@@ -90,7 +91,11 @@
                         </p>
 
                         @if ($isReady)
-                            <flux:button href="{{ \Illuminate\Support\Facades\Storage::url($download->file_path) }}" variant="primary" class="w-full">
+                            <flux:button
+                                href="{{ $isExternal ? $download->file_path : \Illuminate\Support\Facades\Storage::url($download->file_path) }}"
+                                variant="primary"
+                                class="w-full"
+                            >
                                 {{ t('Download file') }}
                             </flux:button>
                         @else

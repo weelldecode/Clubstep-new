@@ -20,6 +20,7 @@ class Index extends Component
     public array $selectedItemCategories = []; // se quiser usar depois
     public array $selectedCollectionTags = [];
     public array $selectedItemTags = [];
+    public array $selectedCollectionTypes = ["sites"];
 
     public string $search = "";
     public string $sortField = "name";
@@ -40,6 +41,7 @@ class Index extends Component
         "selectedItemCategories" => ["except" => []],
         "selectedCollectionTags" => ["except" => []],
         "selectedItemTags" => ["except" => []],
+        "selectedCollectionTypes" => ["except" => ["sites"]],
         "sortField" => ["except" => "name"],
         "sortDirection" => ["except" => "asc"],
         "page" => ["except" => 1],
@@ -49,6 +51,10 @@ class Index extends Component
     {
         $this->tag = $tag;
         $this->category = $category;
+
+        if (empty($this->selectedCollectionTypes)) {
+            $this->selectedCollectionTypes = ["sites"];
+        }
 
         // aplica filtros iniciais baseados na rota
         if ($this->tag) {
@@ -89,6 +95,7 @@ class Index extends Component
         $this->selectedItemCategories = [];
         $this->selectedCollectionTags = [];
         $this->selectedItemTags = [];
+        $this->selectedCollectionTypes = ["sites"];
         $this->search = "";
         $this->sortField = "name";
         $this->sortDirection = "asc";
@@ -115,6 +122,7 @@ class Index extends Component
 
         $filters = CollectionBrowseFilters::from([
             "search" => $this->search,
+            "selectedCollectionTypes" => $this->selectedCollectionTypes,
             "selectedCollectionCategories" =>
                 $this->selectedCollectionCategories,
             "selectedCollectionTags" => $this->selectedCollectionTags,

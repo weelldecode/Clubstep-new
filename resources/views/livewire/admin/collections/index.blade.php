@@ -79,6 +79,46 @@
                         <flux:textarea wire:model.live="form.description" rows="4" />
                         @error('form.description') <div class="text-xs text-red-500 mt-1">{{ $message }}</div> @enderror
                     </div>
+                    <div class="space-y-2">
+                        <flux:label>{{ t('Collection ZIP') }}</flux:label>
+
+                        <label class="group cursor-pointer block rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-900/30 p-4 hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 transition">
+                            <input type="file"
+                                   class="hidden"
+                                   wire:model="form.file_upload"
+                                   accept=".zip,application/zip" />
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                                        {{ t('Select ZIP file') }}
+                                    </div>
+                                    <div class="text-xs text-zinc-500">
+                                        {{ t('ZIP • up to 50MB') }}
+                                    </div>
+                                </div>
+
+                                <div class="text-xs px-3 py-1 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950">
+                                    {{ t('Choose file') }}
+                                </div>
+                            </div>
+                        </label>
+
+                        @error('form.file_upload')
+                            <div class="text-xs text-red-500">{{ $message }}</div>
+                        @enderror
+
+                        <div class="space-y-2">
+                            <flux:label>{{ t('External link (optional)') }}</flux:label>
+                            <flux:input wire:model.live="form.file_url" placeholder="https://..." />
+                            @error('form.file_url') <div class="text-xs text-red-500 mt-1">{{ $message }}</div> @enderror
+                        </div>
+
+                        @if (!empty($form['file_url']))
+                            <div class="text-xs text-zinc-500">
+                                {{ t('Current file') }}: {{ basename($form['file_url']) }}
+                            </div>
+                        @endif
+                    </div>
                     <div>
                         <flux:label>{{ t('Type') }}</flux:label>
                         <x-select

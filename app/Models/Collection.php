@@ -23,6 +23,7 @@ class Collection extends Model
         "visibility",
         "status",
         "type",
+        "file_url",
     ];
 
     protected $casts = [

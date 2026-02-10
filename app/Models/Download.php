@@ -18,6 +18,6 @@ class Download extends Model
 
     public function collection()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Collection::class);
     }
 }

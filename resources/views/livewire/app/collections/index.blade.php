@@ -49,7 +49,35 @@
                     <flux:separator class="my-4" />
 
                     <div class="space-y-6">
-                        {{-- Tipo de Conteúdo --}}
+                        {{-- Tipo de Colecao --}}
+                        <div x-data="{ open: true }">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex w-full items-center justify-between"
+                            >
+                                <div class="text-left">
+                                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ t('Collection type') }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('Sites, Mockups, Arts') }}</p>
+                                </div>
+
+                                <flux:icon.chevron-down
+                                    class="size-4 transition-transform duration-300"
+                                    x-bind:class="open ? 'rotate-180' : ''"
+                                />
+                            </button>
+
+                            <div x-show="open" x-transition x-cloak class="mt-3">
+                                <flux:checkbox.group wire:model.live="selectedCollectionTypes" class="space-y-2">
+                                    <flux:checkbox label="{{ t('Sites') }}" value="sites" />
+                                    <flux:checkbox label="{{ t('Mockups') }}" value="mockups" />
+                                    <flux:checkbox label="{{ t('Arts') }}" value="arts" />
+                                </flux:checkbox.group>
+                            </div>
+                        </div>
+
+                        <flux:separator />
+
                         {{-- Tipo de Conteúdo --}}
                         <div x-data="{ open: true }">
                             <button
@@ -172,6 +200,12 @@
 
                 {{-- Chips ativos (opcional) --}}
                 <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                    @if(!empty($selectedCollectionTypes))
+                        <span class="inline-flex items-center rounded-full bg-zinc-100/80 dark:bg-zinc-900 px-3 py-1 font-semibold text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-zinc-800">
+                            {{ count($selectedCollectionTypes) }} {{ t('types') }}
+                        </span>
+                    @endif
+
                     @if(!empty($selectedCollectionCategories))
                         <span class="inline-flex items-center rounded-full bg-zinc-100/80 dark:bg-zinc-900 px-3 py-1 font-semibold text-zinc-700 dark:text-zinc-200 ring-1 ring-zinc-200/60 dark:ring-zinc-800">
                             {{ count($selectedCollectionCategories) }} {{ t('categories') }}
@@ -250,6 +284,17 @@
 
             {{-- Repete os filtros aqui (mobile) --}}
             <div class="space-y-6">
+                <div>
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2">{{ t('Collection type') }}</p>
+                    <flux:checkbox.group wire:model.live="selectedCollectionTypes" class="space-y-2">
+                        <flux:checkbox label="{{ t('Sites') }}" value="sites" />
+                        <flux:checkbox label="{{ t('Mockups') }}" value="mockups" />
+                        <flux:checkbox label="{{ t('Arts') }}" value="arts" />
+                    </flux:checkbox.group>
+                </div>
+
+                <flux:separator />
+
                 <div>
                     <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2">{{ t('Content type') }}</p>
                     <flux:checkbox.group wire:model.live="selectedCollectionCategories" class="space-y-2">

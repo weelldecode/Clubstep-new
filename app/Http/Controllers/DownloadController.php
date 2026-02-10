@@ -11,11 +11,17 @@ class DownloadController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->activeSubscription()) {
+        if (!method_exists($user, "hasActiveSubscription") || !$user->hasActiveSubscription()) {
             abort(403, "Apenas assinantes podem baixar este arquivo.");
         }
 
-        $filePath = storage_path("app/" . $download->file_path);
+        $filePathRaw = (string) $download->file_path;
+
+        if (str_starts_with($filePathRaw, "http://") || str_starts_with($filePathRaw, "https://")) {
+            return redirect()->away($filePathRaw);
+        }
+
+        $filePath = storage_path("app/public/" . ltrim($filePathRaw, "/"));
 
         if (!file_exists($filePath)) {
             abort(404);

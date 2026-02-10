@@ -6,6 +6,7 @@ final class CollectionBrowseFilters
 {
     public function __construct(
         public readonly string $search = "",
+        public readonly array $collectionTypes = [],
         public readonly array $collectionCategoryIds = [],
         public readonly array $collectionTagIds = [],
         public readonly array $itemTagIds = [],
@@ -17,6 +18,9 @@ final class CollectionBrowseFilters
     {
         return new self(
             search: (string) ($data["search"] ?? ""),
+            collectionTypes: array_values(
+                $data["selectedCollectionTypes"] ?? [],
+            ),
             collectionCategoryIds: array_values(
                 $data["selectedCollectionCategories"] ?? [],
             ),

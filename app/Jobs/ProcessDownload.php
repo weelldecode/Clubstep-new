@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Item;
+use App\Models\Collection;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,20 +27,33 @@ class ProcessDownload implements ShouldQueue
         try {
             $this->download->update(["status" => "processing"]);
 
-            $item = $this->download; // relacionamento do download com o item
+            $collection =
+                $this->download->relationLoaded("collection") ||
+                $this->download->collection
+                    ? $this->download->collection
+                    : Collection::find($this->download->collection_id);
 
-            $item_collection = Item::where("id", $item->collection_id)->first();
-
-            if (!$item_collection || !$item_collection->file_url) {
+            if (!$collection || !$collection->file_url) {
                 Log::error(
-                    "ProcessDownload: Item não encontrado ou sem arquivo para download ID {$item_collection->id}",
+                    "ProcessDownload: Coleção não encontrada ou sem arquivo para download ID {$this->download->collection_id}",
                 );
                 $this->download->update(["status" => "failed"]);
                 return;
             }
 
+            $fileUrl = (string) $collection->file_url;
+
+            if (str_starts_with($fileUrl, "http://") || str_starts_with($fileUrl, "https://")) {
+                $this->download->update([
+                    "status" => "ready",
+                    "file_path" => $fileUrl,
+                ]);
+                Log::info("ProcessDownload: Download pronto em {$fileUrl}");
+                return;
+            }
+
             // Caminho do zip já pronto
-            $zipPath = storage_path("app/public/" . $item_collection->file_url);
+            $zipPath = storage_path("app/public/" . ltrim($fileUrl, "/"));
 
             if (!file_exists($zipPath)) {
                 Log::error(
@@ -53,11 +66,11 @@ class ProcessDownload implements ShouldQueue
             // Atualiza o download para pronto, apontando para o mesmo zip
             $this->download->update([
                 "status" => "ready",
-                "file_path" => $item_collection->file_url,
+                "file_path" => ltrim($fileUrl, "/"),
             ]);
 
             Log::info(
-                "ProcessDownload: Download pronto em {$item_collection->file_url}",
+                "ProcessDownload: Download pronto em {$collection->file_url}",
             );
         } catch (\Exception $e) {
             Log::error("ProcessDownload Error: {$e->getMessage()}");

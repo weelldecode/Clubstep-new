@@ -25,6 +25,9 @@ final class BrowseCollectionsQuery
                 $f->search !== "",
                 fn($q) => $q->where("name", "like", "%{$f->search}%"),
             )
+            ->when(!empty($f->collectionTypes), function ($q) use ($f) {
+                $q->whereIn("type", $f->collectionTypes);
+            })
             ->when(!empty($f->collectionCategoryIds), function ($q) use ($f) {
                 $q->where(function ($qq) use ($f) {
                     $qq->whereHas(

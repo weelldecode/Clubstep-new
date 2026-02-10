@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Collections;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use Illuminate\Validation\Rule;
 use App\Models\User;
 use App\Models\Collection;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public string $search = "";
     public string $sortField = "created_at";
@@ -33,10 +34,12 @@ class Index extends Component
         "slug" => "",
         "description" => "",
         "type" => "mockups",
+        "file_url" => "",
         "visibility" => "public",
         "status" => "draft",
         "category_ids" => [],
         "tag_ids" => [],
+        "file_upload" => null,
     ];
 
     protected $queryString = [
@@ -69,6 +72,8 @@ class Index extends Component
             ],
             "form.description" => ["nullable", "string", "max:2000"],
             "form.type" => ["required", Rule::in(["mockups", "arts", "sites"])],
+            "form.file_url" => ["nullable", "string", "max:2048"],
+            "form.file_upload" => ["nullable", "file", "mimes:zip", "max:51200"],
             "form.visibility" => [
                 "required",
                 Rule::in(array_column(CollectionVisibility::cases(), "value")),
@@ -119,6 +124,8 @@ class Index extends Component
             "slug" => "",
             "description" => "",
             "type" => "mockups",
+            "file_url" => "",
+            "file_upload" => null,
             "user_id" => null,
             "visibility" => CollectionVisibility::Public->value,
             "status" => CollectionStatus::Draft->value,
@@ -142,6 +149,8 @@ class Index extends Component
             "slug" => $c->slug,
             "description" => $c->description ?? "",
             "type" => $c->type ?? "mockups",
+            "file_url" => $c->file_url ?? "",
+            "file_upload" => null,
             "user_id" => $c->user_id,
             "visibility" =>
                 $c->visibility instanceof \BackedEnum
@@ -194,10 +203,18 @@ class Index extends Component
             "slug" => $this->form["slug"],
             "description" => $this->form["description"] ?? null,
             "type" => $this->form["type"],
+            "file_url" => $this->form["file_url"] ?? "",
             "user_id" => $this->form["user_id"] ?? null,
             "visibility" => $this->form["visibility"],
             "status" => $this->form["status"],
         ];
+
+        if (!empty($this->form["file_upload"])) {
+            $payload["file_url"] = $this->form["file_upload"]->store(
+                "collections/files",
+                "public",
+            );
+        }
 
         if ($this->editingId) {
             $c = Collection::findOrFail($this->editingId);
@@ -234,6 +251,7 @@ class Index extends Component
         $c->tags()->sync($tagIds->all());
 
         $this->showModal = false;
+        $this->form["file_upload"] = null;
         $this->dispatch("notify", message: "Salvo com sucesso.");
     }
 
