@@ -436,6 +436,7 @@
             </div>
         </footer>
         <livewire:components.subscription-modal />
+        @livewireScripts
         <wireui:scripts />
         @fluxScripts
         <x-toast />

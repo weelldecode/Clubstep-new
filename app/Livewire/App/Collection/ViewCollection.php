@@ -58,7 +58,7 @@ class ViewCollection extends Component
     {
         if (
             $name === "search" ||
-            str_starts_with($name, "selected") ||
+            $name === "selectedItemCategories" ||
             $name === "sortField" ||
             $name === "sortDirection"
         ) {
@@ -78,7 +78,16 @@ class ViewCollection extends Component
 
     public function showItem(int $id): void
     {
-        $this->selectedItem = Item::findOrFail($id);
+        $this->selectedItem = Item::with("categories")
+            ->where("collection_id", $this->collection->id)
+            ->whereKey($id)
+            ->first();
+
+        if (!$this->selectedItem) {
+            $this->dispatch("notify", message: "Item nao encontrado.");
+            return;
+        }
+
         $this->showModal = true;
     }
 
@@ -134,6 +143,13 @@ class ViewCollection extends Component
     public function closeReport(): void
     {
         $this->showReportModal = false;
+    }
+
+    public function clearFilters(): void
+    {
+        $this->search = "";
+        $this->selectedItemCategories = [];
+        $this->resetPage();
     }
 
     public function startDownload(StartCollectionDownload $action, ?int $itemId = null): void
@@ -287,11 +303,22 @@ class ViewCollection extends Component
         CollectionItemsQuery $itemsQuery,
         RelatedCollectionsQuery $relatedQuery,
     ) {
-        // carrega taxonomia (cacheada no Domain)
-        $this->allItemCategories = $tax->itemsCategories();
-
         // carrega collection com relações necessárias (ajuste author/user conforme seu model)
         $collection = $this->collection->load(["categories", "author"]);
+
+        // carrega taxonomia (cacheada no Domain); fallback para categorias reais dos itens da coleção
+        $this->allItemCategories = $tax->itemsCategories();
+        if (collect($this->allItemCategories)->isEmpty()) {
+            $this->allItemCategories = $collection
+                ->items()
+                ->with("categories:id,name")
+                ->get()
+                ->pluck("categories")
+                ->flatten()
+                ->unique("id")
+                ->sortBy("name")
+                ->values();
+        }
 
         $itemsForPreview = $collection
             ->items()

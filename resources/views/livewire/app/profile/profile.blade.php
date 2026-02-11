@@ -38,47 +38,6 @@
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
 
-@if ($showProfileRing)
-    <style>
-        @keyframes profileRingSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes profileRingPulse {
-            0%, 100% { opacity: 0.65; }
-            50% { opacity: 1; }
-        }
-        .profile-ring::before {
-            content: "";
-            position: absolute;
-            inset: -6px;
-            border-radius: 9999px;
-            background: var(--ring-gradient);
-            animation: profileRingSpin var(--ring-speed) linear infinite;
-            filter: blur(1.5px);
-            box-shadow: 0 0 18px var(--ring-glow);
-            z-index: 0;
-            pointer-events: none;
-        }
-        .profile-ring::after {
-            content: "";
-            position: absolute;
-            inset: -2px;
-            border-radius: 9999px;
-            border: 2px solid var(--ring-border);
-            animation: profileRingPulse 2.4s ease-in-out infinite;
-            z-index: 0;
-            pointer-events: none;
-        }
-        .profile-ring {
-            isolation: isolate;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-@endif
-
 @php
     $bannerPath = $user->profile_banner;
     $bannerUrl = $user->bannerUrl()
@@ -94,6 +53,46 @@
 @endphp
 
 <div>
+    @if ($showProfileRing)
+        <style>
+            @keyframes profileRingSpin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes profileRingPulse {
+                0%, 100% { opacity: 0.65; }
+                50% { opacity: 1; }
+            }
+            .profile-ring::before {
+                content: "";
+                position: absolute;
+                inset: -6px;
+                border-radius: 9999px;
+                background: var(--ring-gradient);
+                animation: profileRingSpin var(--ring-speed) linear infinite;
+                filter: blur(1.5px);
+                box-shadow: 0 0 18px var(--ring-glow);
+                z-index: 0;
+                pointer-events: none;
+            }
+            .profile-ring::after {
+                content: "";
+                position: absolute;
+                inset: -2px;
+                border-radius: 9999px;
+                border: 2px solid var(--ring-border);
+                animation: profileRingPulse 2.4s ease-in-out infinite;
+                z-index: 0;
+                pointer-events: none;
+            }
+            .profile-ring {
+                isolation: isolate;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    @endif
     {{-- Banner --}}
     <div id="bannerComponent" class="relative top-0 w-full h-[22rem] md:h-[24rem] shadow overflow-hidden">
 

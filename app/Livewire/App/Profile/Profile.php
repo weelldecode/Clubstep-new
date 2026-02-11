@@ -4,9 +4,11 @@ namespace App\Livewire\App\Profile;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Support\Cache\CacheKeys;
 
 class Profile extends Component
 {
@@ -119,6 +121,9 @@ class Profile extends Component
             message: "Banner alterado com sucesso!",
             type: "success",
         );
+
+        // Atualiza cache da home para refletir avatar/banner mais recentes.
+        Cache::forget(CacheKeys::homeFeaturedArtists());
     }
 
     public function updatedAvatarTemp()
@@ -151,6 +156,9 @@ class Profile extends Component
             message: "Avatar alterado com sucesso!",
             type: "success",
         );
+
+        // Atualiza cache da home para refletir avatar/banner mais recentes.
+        Cache::forget(CacheKeys::homeFeaturedArtists());
     }
 
     public function toggleFollow()

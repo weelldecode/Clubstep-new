@@ -109,6 +109,7 @@
 <meta name="twitter:description" content="{{ $seoDescription }}" />
 <meta name="twitter:image" content="{{ $seoImage }}" />
 
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <meta name="csrf_token" content="{{ csrf_token() }}" />
 <link rel="icon" href="/assets/img/icone.webp" type="image/webp">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -117,5 +118,6 @@
 
 @stack("seo")
 @vite(["resources/css/app.css", "resources/js/app.js"])
+@livewireStyles
 @fluxAppearance
 @wireUiScripts

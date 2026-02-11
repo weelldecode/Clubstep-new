@@ -220,6 +220,7 @@
     </main>
 </div>
 <wireui:scripts />
+@livewireScripts
 @fluxScripts
 <x-toast />
 </body>

@@ -14,6 +14,16 @@ final class CollectionItemsQuery
         string $sortField,
         string $sortDirection,
     ): Builder {
+        $itemCategoryIds = array_values(
+            array_filter(
+                array_map(
+                    static fn($id) => is_numeric($id) ? (int) $id : null,
+                    $itemCategoryIds,
+                ),
+                static fn($id) => !is_null($id),
+            ),
+        );
+
         $allowedSorts = ["name", "created_at", "updated_at"];
         $sortField = in_array($sortField, $allowedSorts, true)
             ? $sortField

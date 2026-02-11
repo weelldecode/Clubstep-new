@@ -47,43 +47,42 @@
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
 
-<style>
-    @keyframes profileRingSpinSm {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .profile-ring-sm {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        isolation: isolate;
-    }
-    .profile-ring-sm::before {
-        content: "";
-        position: absolute;
-        inset: -4px;
-        border-radius: 9999px;
-        background: var(--ring-gradient);
-        animation: profileRingSpinSm var(--ring-speed) linear infinite;
-        filter: blur(1px);
-        opacity: 0.9;
-        z-index: 0;
-        pointer-events: none;
-    }
-    .profile-ring-sm::after {
-        content: "";
-        position: absolute;
-        inset: -1px;
-        border-radius: 9999px;
-        border: 2px solid var(--ring-border);
-        opacity: 0.7;
-        z-index: 0;
-        pointer-events: none;
-    }
-</style>
-
 <div class="relative overflow-hidden">
+    <style>
+        @keyframes profileRingSpinSm {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .profile-ring-sm {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            isolation: isolate;
+        }
+        .profile-ring-sm::before {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            background: var(--ring-gradient);
+            animation: profileRingSpinSm var(--ring-speed) linear infinite;
+            filter: blur(1px);
+            opacity: 0.9;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .profile-ring-sm::after {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: 9999px;
+            border: 2px solid var(--ring-border);
+            opacity: 0.7;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
     <style>
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(18px); }
@@ -291,48 +290,81 @@
                 {{-- RIGHT: ITEMS --}}
                 <main class="lg:col-span-8 space-y-4 fade-up delay-2">
                     <div class="rounded-2xl border border-zinc-200/70 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/80 backdrop-blur p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.35)]">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div class="w-full sm:w-[260px]">
-                                <x-select
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <input
+                                type="text"
+                                wire:model.live.debounce.300ms="search"
+                                placeholder="{{ t('Search item...') }}"
+                                class="w-full rounded-xl border border-zinc-200/70 bg-white px-3 py-2.5 text-sm text-zinc-800 shadow-sm outline-none transition focus:border-accent/40 focus:ring-2 focus:ring-accent/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                            />
+
+                            <div class="rounded-xl border border-zinc-200/70 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3">
+                                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">
+                                    {{ t('Filter category') }}
+                                </p>
+                                <div class="max-h-28 overflow-y-auto pr-1">
+                                    <flux:checkbox.group wire:model.live="selectedItemCategories" class="space-y-2">
+                                        @foreach ($allItemCategories as $category)
+                                            <flux:checkbox label="{{ $category->name }}" value="{{ $category->id }}" />
+                                        @endforeach
+                                    </flux:checkbox.group>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="w-full sm:w-[280px]">
+                                <select
                                     wire:model.live="sortField"
-                                    placeholder="{{ t('Sort by') }}"
-                                    :options="[
-                                        ['name' => t('Name'), 'id' => 'name'],
-                                        ['name' => t('Created date'), 'id' => 'created_at'],
-                                    ]"
-                                    option-label="name"
-                                    option-value="id"
-                                />
+                                    class="w-full rounded-xl border border-zinc-200/70 bg-white px-3 py-2.5 text-sm text-zinc-800 shadow-sm outline-none transition focus:border-accent/40 focus:ring-2 focus:ring-accent/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                                >
+                                    <option value="name">{{ t('Name') }}</option>
+                                    <option value="created_at">{{ t('Created date') }}</option>
+                                </select>
                             </div>
 
-                            <flux:button wire:click="toggleSortDirection" variant="outline" title="Alternar ordem">
-                                @if ($sortDirection === 'asc')
-                                    ↑ {{ t('Ascending') }}
-                                @else
-                                    ↓ {{ t('Descending') }}
-                                @endif
-                            </flux:button>
+                            <div class="flex items-center gap-2">
+                                <flux:button wire:click="clearFilters" variant="ghost">
+                                    {{ t('Clear') }}
+                                </flux:button>
+                                <flux:button wire:click="toggleSortDirection" variant="outline" title="Alternar ordem">
+                                    @if ($sortDirection === 'asc')
+                                        ↑ {{ t('Ascending') }}
+                                    @else
+                                        ↓ {{ t('Descending') }}
+                                    @endif
+                                </flux:button>
+                            </div>
                         </div>
                     </div>
 
-                    <div wire:loading class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div
+                        wire:loading
+                        wire:target="search,selectedItemCategories,sortField,sortDirection,clearFilters"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                    >
                         @for($i=0;$i<6;$i++)
                             <div class="h-[300px] rounded-2xl bg-zinc-100 dark:bg-zinc-900 animate-pulse"></div>
                         @endfor
                     </div>
 
-                    <div wire:loading.remove class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div
+                        wire:loading.remove
+                        wire:target="search,selectedItemCategories,sortField,sortDirection,clearFilters"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                    >
                         @forelse($items as $index => $item)
                             <div
-                                x-data="{ visible: false }"
-                                x-init="setTimeout(() => visible = true, {{ $index * 70 }})"
-                                :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
-                                wire:click="showItem({{ $item->id }})"
-                                class="opacity-0 translate-y-3 transition-all duration-500 ease-out cursor-pointer"
+                                wire:key="collection-item-{{ $item->id }}"
+                                class="w-full text-left transition-transform duration-300 ease-out cursor-pointer hover:-translate-y-0.5"
                                 role="button"
                                 tabindex="0"
+                                wire:click="showItem({{ $item->id }})"
+                                wire:keydown.enter="showItem({{ $item->id }})"
                             >
-                                <div class="group relative overflow-hidden rounded-2xl border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 shadow-[0_20px_50px_-40px_rgba(0,0,0,0.35)]">
+                                <div
+                                    class="group relative overflow-hidden rounded-2xl border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 shadow-[0_20px_50px_-40px_rgba(0,0,0,0.35)]"
+                                >
                                     <img
                                         src="{{ $item->preview_url }}"
                                         class="h-[300px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -375,6 +407,7 @@
                                                 @elseif ($cartHasItem && !$itemInCart)
                                                     <a
                                                         href="{{ route('cart.index') }}"
+                                                        wire:click.stop
                                                         class="inline-flex items-center rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
                                                     >
                                                         Finalizar compra
@@ -382,6 +415,7 @@
                                                 @elseif ($itemInCart)
                                                     <a
                                                         href="{{ route('cart.index') }}"
+                                                        wire:click.stop
                                                         class="inline-flex items-center rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
                                                     >
                                                         No carrinho

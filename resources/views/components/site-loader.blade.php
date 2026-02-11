@@ -8,7 +8,7 @@
 
 <div
     id="site-global-loader"
-    class="fixed inset-0 z-[99999] flex items-center justify-center bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 opacity-100 transition-opacity duration-500 ease-out"
+    class="fixed inset-0 z-[99999] pointer-events-none flex items-center justify-center bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 opacity-100 transition-opacity duration-500 ease-out"
     aria-live="polite"
     aria-busy="true"
 >
